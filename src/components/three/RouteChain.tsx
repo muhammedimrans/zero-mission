@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -130,28 +130,55 @@ function ChainNode({
   )
 }
 
-// ── Connection lines between chain nodes ──────────────────────────────────────
+// ── Connection lines with active-hop highlight ────────────────────────────────
 
-function ChainConnections({ nodes }: { nodes: RouteNode[] }) {
+function ChainConnections({
+  nodes,
+  activeHop,
+}: {
+  nodes:     RouteNode[]
+  activeHop: number
+}) {
+  const matRefs = useRef<(THREE.LineBasicMaterial | null)[]>([])
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    matRefs.current.forEach((mat, i) => {
+      if (!mat) return
+      const isActive = i === activeHop
+      const target = isActive ? 0.85 : 0.22
+      mat.opacity += (target - mat.opacity) * 0.12
+      if (isActive) {
+        // Animated pulse along active edge
+        mat.opacity = 0.55 + Math.sin(t * 8) * 0.3
+      }
+    })
+  })
+
   const lineObjects = useMemo(() => {
-    const result: { line: THREE.Line; key: string }[] = []
+    const result: { line: THREE.Line; mat: THREE.LineBasicMaterial; key: string }[] = []
     for (let i = 0; i < nodes.length - 1; i++) {
       const from = nodes[i].position
-      const to = nodes[i + 1].position
-      const geo = new THREE.BufferGeometry()
-      const pts = new Float32Array([...from, ...to])
+      const to   = nodes[i + 1].position
+      const geo  = new THREE.BufferGeometry()
+      const pts  = new Float32Array([...from, ...to])
       geo.setAttribute('position', new THREE.BufferAttribute(pts, 3))
+      const blendColor = nodes[i].color
       const mat = new THREE.LineBasicMaterial({
-        color: COLORS.neonBlue,
+        color:      blendColor,
         transparent: true,
-        opacity: 0.25,
+        opacity:    0.22,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
+        blending:   THREE.AdditiveBlending,
       })
-      result.push({ line: new THREE.Line(geo, mat), key: `chain-${i}` })
+      result.push({ line: new THREE.Line(geo, mat), mat, key: `chain-${i}` })
     }
     return result
   }, [nodes])
+
+  useEffect(() => {
+    matRefs.current = lineObjects.map((o) => o.mat)
+  }, [lineObjects])
 
   return (
     <>
@@ -162,45 +189,86 @@ function ChainConnections({ nodes }: { nodes: RouteNode[] }) {
   )
 }
 
-// ── Moving packet dot ─────────────────────────────────────────────────────────
+// ── Moving packet dot with mint glow trail ────────────────────────────────────
+
+const PACKET_TRAIL = 8
 
 function PacketDot({
   nodes,
   progress,
 }: {
-  nodes: RouteNode[]
+  nodes:    RouteNode[]
   progress: number
 }) {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const headRef      = useRef<THREE.Mesh>(null)
+  const trailRefs    = useRef<(THREE.Mesh | null)[]>([])
+  const trailHistory = useRef<THREE.Vector3[]>(
+    Array.from({ length: PACKET_TRAIL }, () => new THREE.Vector3()),
+  )
   const progressRef = useRef(progress)
-
-  // Keep ref in sync
   progressRef.current = progress
 
   useFrame(() => {
-    if (!meshRef.current || nodes.length < 2) return
+    if (!headRef.current || nodes.length < 2) return
     const segCount = nodes.length - 1
-    const total = progressRef.current % nodes.length
-    const segIdx = Math.min(Math.floor(total), segCount - 1)
-    const segT = total - segIdx
+    const total    = progressRef.current % nodes.length
+    const segIdx   = Math.min(Math.floor(total), segCount - 1)
+    const segT     = total - segIdx
 
     const from = new THREE.Vector3(...nodes[segIdx].position)
-    const to = new THREE.Vector3(...nodes[Math.min(segIdx + 1, nodes.length - 1)].position)
-    const pos = from.lerp(to, Math.min(segT, 1))
-    meshRef.current.position.copy(pos)
+    const to   = new THREE.Vector3(...nodes[Math.min(segIdx + 1, nodes.length - 1)].position)
+    const pos  = from.lerp(to, Math.min(segT, 1))
+    headRef.current.position.copy(pos)
+
+    // Shift trail history
+    for (let j = PACKET_TRAIL - 1; j > 0; j--) {
+      trailHistory.current[j].copy(trailHistory.current[j - 1])
+    }
+    trailHistory.current[0].copy(pos)
+
+    // Update trail mesh positions + opacity
+    trailRefs.current.forEach((mesh, i) => {
+      if (mesh && trailHistory.current[i]) {
+        mesh.position.copy(trailHistory.current[i])
+        ;(mesh.material as THREE.MeshBasicMaterial).opacity =
+          (1 - i / PACKET_TRAIL) * 0.65
+      }
+    })
   })
 
   return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[0.06, 8, 8]} />
-      <meshBasicMaterial
-        color="#ffffff"
-        transparent
-        opacity={0.95}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </mesh>
+    <group>
+      {/* Head — bright white */}
+      <mesh ref={headRef}>
+        <sphereGeometry args={[0.07, 10, 10]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.95}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Mint trail */}
+      {Array.from({ length: PACKET_TRAIL }, (_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => { trailRefs.current[i] = el }}
+        >
+          <sphereGeometry
+            args={[Math.max(0.01, 0.055 * (1 - i / PACKET_TRAIL)), 6, 6]}
+          />
+          <meshBasicMaterial
+            color={COLORS.primary ?? '#6effc7'}
+            transparent
+            opacity={0}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
   )
 }
 
@@ -214,7 +282,7 @@ export default function RouteChain({
 }: RouteChainProps) {
   return (
     <group>
-      <ChainConnections nodes={nodes} />
+      <ChainConnections nodes={nodes} activeHop={activeHop} />
       {nodes.map((node, i) => (
         <ChainNode
           key={node.label}

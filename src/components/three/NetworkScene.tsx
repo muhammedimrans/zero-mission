@@ -1,33 +1,35 @@
 'use client'
 
-import { useRef, useMemo, useState, useCallback } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
+import { useFrame } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { useAppStore } from '@/lib/store'
 import { NetworkNode, NodeType } from '@/lib/types'
 import { COLORS } from '@/lib/constants'
+import { latLngToVector3 } from '@/lib/utils'
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const GLOBE_RADIUS = 3.6
+const TRAIL_LENGTH = 10
 
 const NODE_COLOR: Record<NodeType, string> = {
   guard: COLORS.guard,
-  mix: COLORS.mix,
-  exit: COLORS.exit,
+  mix:   COLORS.mix,
+  exit:  COLORS.exit,
   client: COLORS.client,
   service: COLORS.purple,
 }
 
 const NODE_SIZE: Record<NodeType, number> = {
-  guard: 0.12,
-  mix: 0.1,
-  exit: 0.12,
-  client: 0.1,
-  service: 0.1,
+  guard:   0.042,
+  mix:     0.036,
+  exit:    0.042,
+  client:  0.034,
+  service: 0.034,
 }
-
-// ── Seed-based layout (stable positions from node id) ────────────────────────
 
 function hashStr(s: string): number {
   let h = 0
@@ -37,54 +39,173 @@ function hashStr(s: string): number {
   return h
 }
 
-function nodePosition(id: string): [number, number, number] {
-  const h = hashStr(id)
-  const h2 = hashStr(id + 'y')
-  const h3 = hashStr(id + 'z')
-  const x = (((h & 0xffff) / 0xffff) * 2 - 1) * 5
-  const y = (((h2 & 0xffff) / 0xffff) * 2 - 1) * 3
-  const z = (((h3 & 0xffff) / 0xffff) * 2 - 1) * 2
-  return [x, y, z]
+// ── Arc geometry builder ──────────────────────────────────────────────────────
+
+function buildArcPositions(
+  from: [number, number, number],
+  to:   [number, number, number],
+  segments = 52,
+  lift = GLOBE_RADIUS * 0.11,
+): Float32Array {
+  const start = new THREE.Vector3(...from)
+  const end   = new THREE.Vector3(...to)
+  const mid   = start.clone().lerp(end, 0.5)
+  mid.normalize().multiplyScalar(start.length() + lift)
+  const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
+  const pts   = curve.getPoints(segments)
+  const arr   = new Float32Array(pts.length * 3)
+  pts.forEach((p, i) => {
+    arr[i * 3]     = p.x
+    arr[i * 3 + 1] = p.y
+    arr[i * 3 + 2] = p.z
+  })
+  return arr
 }
 
-// ── Individual interactive node sphere ───────────────────────────────────────
+// ── Globe base with atmosphere ────────────────────────────────────────────────
 
-interface NodeSphereProps {
-  node: NetworkNode
-  position: [number, number, number]
-  isSelected: boolean
-  isHovered: boolean
-  isFiltered: boolean
-  onHover: (id: string | null) => void
-  onSelect: (node: NetworkNode) => void
-}
-
-function NodeSphere({
-  node,
-  position,
-  isSelected,
-  isHovered,
-  isFiltered,
-  onHover,
-  onSelect,
-}: NodeSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  const glowRef = useRef<THREE.Mesh>(null)
-  const color = NODE_COLOR[node.type] ?? '#ffffff'
-  const baseSize = NODE_SIZE[node.type] ?? 0.1
+function GlobeBase() {
+  const atmo1 = useRef<THREE.Mesh>(null)
+  const atmo2 = useRef<THREE.Mesh>(null)
+  const atmo3 = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
-    if (!meshRef.current || !glowRef.current) return
     const t = clock.getElapsedTime()
-    const targetScale = isHovered || isSelected ? 1.5 : 1
-    meshRef.current.scale.lerp(
-      new THREE.Vector3(targetScale, targetScale, targetScale),
-      0.12
-    )
-    glowRef.current.scale.copy(meshRef.current.scale)
-    const mat = glowRef.current.material as THREE.MeshBasicMaterial
-    mat.opacity = (0.15 + Math.sin(t * 1.5 + hashStr(node.id) * 0.01) * 0.05) *
-      (isHovered || isSelected ? 1.6 : 1)
+    if (atmo1.current)
+      (atmo1.current.material as THREE.MeshBasicMaterial).opacity =
+        0.16 + Math.sin(t * 0.65) * 0.03
+    if (atmo2.current)
+      (atmo2.current.material as THREE.MeshBasicMaterial).opacity =
+        0.07 + Math.sin(t * 0.48 + 1.2) * 0.015
+    if (atmo3.current)
+      (atmo3.current.material as THREE.MeshBasicMaterial).opacity =
+        0.03 + Math.sin(t * 0.35 + 2.5) * 0.008
+  })
+
+  return (
+    <group>
+      {/* Deep ocean sphere */}
+      <mesh>
+        <sphereGeometry args={[GLOBE_RADIUS, 80, 80]} />
+        <meshStandardMaterial
+          color="#010c1a"
+          emissive="#040e20"
+          emissiveIntensity={0.55}
+          roughness={0.9}
+          metalness={0.08}
+        />
+      </mesh>
+
+      {/* Latitude / longitude wireframe */}
+      <mesh>
+        <sphereGeometry args={[GLOBE_RADIUS + 0.012, 22, 14]} />
+        <meshBasicMaterial
+          color={COLORS.guard}
+          wireframe
+          transparent
+          opacity={0.055}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Inner atmosphere — warm blue */}
+      <mesh ref={atmo1}>
+        <sphereGeometry args={[GLOBE_RADIUS * 1.028, 64, 64]} />
+        <meshBasicMaterial
+          color="#1a3e88"
+          transparent
+          opacity={0.16}
+          side={THREE.BackSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Mid atmosphere — indigo */}
+      <mesh ref={atmo2}>
+        <sphereGeometry args={[GLOBE_RADIUS * 1.065, 48, 48]} />
+        <meshBasicMaterial
+          color="#3560d8"
+          transparent
+          opacity={0.07}
+          side={THREE.BackSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Outer corona */}
+      <mesh ref={atmo3}>
+        <sphereGeometry args={[GLOBE_RADIUS * 1.16, 32, 32]} />
+        <meshBasicMaterial
+          color="#5080ff"
+          transparent
+          opacity={0.03}
+          side={THREE.BackSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+// ── Individual node marker ────────────────────────────────────────────────────
+
+interface NodeMarkerProps {
+  node:       NetworkNode
+  position:   [number, number, number]
+  isSelected: boolean
+  isHovered:  boolean
+  isFiltered: boolean
+  onHover:    (id: string | null) => void
+  onSelect:   (node: NetworkNode) => void
+}
+
+function NodeMarker({
+  node, position, isSelected, isHovered, isFiltered, onHover, onSelect,
+}: NodeMarkerProps) {
+  const coreRef   = useRef<THREE.Mesh>(null)
+  const glowRef   = useRef<THREE.Mesh>(null)
+  const pulse1Ref = useRef<THREE.Mesh>(null)
+  const pulse2Ref = useRef<THREE.Mesh>(null)
+
+  const color    = NODE_COLOR[node.type] ?? '#ffffff'
+  const baseSize = NODE_SIZE[node.type] ?? 0.036
+  const offset   = useMemo(
+    () => ((hashStr(node.id) & 0xffff) / 0xffff) * Math.PI * 2,
+    [node.id],
+  )
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+
+    if (coreRef.current) {
+      const target = isHovered || isSelected ? 1.8 : 1.0
+      coreRef.current.scale.lerp(
+        new THREE.Vector3(target, target, target), 0.12,
+      )
+    }
+    if (glowRef.current) {
+      glowRef.current.scale.copy(coreRef.current?.scale ?? new THREE.Vector3(1, 1, 1))
+      ;(glowRef.current.material as THREE.MeshBasicMaterial).opacity =
+        (0.18 + Math.sin(t * 1.1 + offset) * 0.06) *
+        (isHovered || isSelected ? 2.2 : 1)
+    }
+
+    // Dual pulse rings
+    if (pulse1Ref.current) {
+      const p1 = ((t * 0.48 + offset) % (Math.PI * 2)) / (Math.PI * 2)
+      const s1 = 1 + p1 * 4.5
+      pulse1Ref.current.scale.set(s1, s1, s1)
+      ;(pulse1Ref.current.material as THREE.MeshBasicMaterial).opacity = (1 - p1) * 0.38
+    }
+    if (pulse2Ref.current) {
+      const p2 = ((t * 0.48 + offset + Math.PI) % (Math.PI * 2)) / (Math.PI * 2)
+      const s2 = 1 + p2 * 4.5
+      pulse2Ref.current.scale.set(s2, s2, s2)
+      ;(pulse2Ref.current.material as THREE.MeshBasicMaterial).opacity = (1 - p2) * 0.2
+    }
   })
 
   if (isFiltered) return null
@@ -93,49 +214,73 @@ function NodeSphere({
     <group position={position}>
       {/* Core sphere */}
       <mesh
-        ref={meshRef}
+        ref={coreRef}
         onPointerOver={(e) => { e.stopPropagation(); onHover(node.id) }}
-        onPointerOut={(e) => { e.stopPropagation(); onHover(null) }}
-        onClick={(e) => { e.stopPropagation(); onSelect(node) }}
+        onPointerOut={(e)  => { e.stopPropagation(); onHover(null) }}
+        onClick={(e)       => { e.stopPropagation(); onSelect(node) }}
       >
-        <sphereGeometry args={[baseSize, 16, 16]} />
+        <sphereGeometry args={[baseSize, 12, 12]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={isHovered || isSelected ? 1.2 : 0.6}
-          roughness={0.2}
-          metalness={0.4}
+          emissiveIntensity={isHovered || isSelected ? 2.4 : 1.0}
+          roughness={0.1}
+          metalness={0.2}
         />
       </mesh>
 
       {/* Glow halo */}
       <mesh ref={glowRef}>
-        <sphereGeometry args={[baseSize * 1.8, 12, 12]} />
+        <sphereGeometry args={[baseSize * 2.4, 8, 8]} />
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={0.15}
+          opacity={0.18}
           side={THREE.BackSide}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* Label on hover/select */}
+      {/* Pulse ring 1 */}
+      <mesh ref={pulse1Ref}>
+        <sphereGeometry args={[baseSize * 1.1, 8, 8]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.38}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Pulse ring 2 — offset half cycle */}
+      <mesh ref={pulse2Ref}>
+        <sphereGeometry args={[baseSize * 1.1, 8, 8]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.2}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* HTML label on hover/select */}
       {(isHovered || isSelected) && (
         <Html distanceFactor={10} center>
           <div
             style={{
-              background: 'rgba(5,5,8,0.85)',
-              border: `1px solid ${color}60`,
+              background: 'rgba(5,5,8,0.92)',
+              border: `1px solid ${color}70`,
               borderRadius: 6,
-              padding: '3px 8px',
+              padding: '3px 9px',
               color,
               fontSize: 10,
               fontFamily: 'var(--font-jetbrains-mono)',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              boxShadow: `0 0 10px ${color}40`,
+              boxShadow: `0 0 14px ${color}55`,
             }}
           >
             {node.label}
@@ -146,25 +291,25 @@ function NodeSphere({
   )
 }
 
-// ── Connection lines ──────────────────────────────────────────────────────────
+// ── Arc connections (curved on globe surface) ─────────────────────────────────
 
-interface ConnectionLinesProps {
-  nodes: NetworkNode[]
-  posMap: Map<string, [number, number, number]>
+function GlobeArcs({
+  nodes,
+  filter,
+}: {
+  nodes:  NetworkNode[]
   filter: NodeType | 'all'
-}
-
-function ConnectionLines({ nodes, posMap, filter }: ConnectionLinesProps) {
+}) {
   const lineObjects = useMemo(() => {
-    const seen = new Set<string>()
-    const nodeMap = new Map(nodes.map((n) => [n.id, n])
-    )
+    const seen    = new Set<string>()
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]))
     const result: { line: THREE.Line; key: string }[] = []
 
     nodes.forEach((node) => {
       if (filter !== 'all' && node.type !== filter) return
-      const color = NODE_COLOR[node.type] ?? '#ffffff'
-      node.connections.forEach((targetId) => {
+      const color = NODE_COLOR[node.type]
+
+      node.connections.slice(0, 2).forEach((targetId) => {
         const edgeKey = [node.id, targetId].sort().join('|')
         if (seen.has(edgeKey)) return
         seen.add(edgeKey)
@@ -173,28 +318,26 @@ function ConnectionLines({ nodes, posMap, filter }: ConnectionLinesProps) {
         if (!target) return
         if (filter !== 'all' && target.type !== filter) return
 
-        const from = posMap.get(node.id)
-        const to = posMap.get(targetId)
-        if (!from || !to) return
+        const from = latLngToVector3(node.lat, node.lng, GLOBE_RADIUS + 0.022)
+        const to   = latLngToVector3(target.lat, target.lng, GLOBE_RADIUS + 0.022)
 
         const geo = new THREE.BufferGeometry()
-        const pts = new Float32Array([...from, ...to])
-        geo.setAttribute('position', new THREE.BufferAttribute(pts, 3))
-
+        geo.setAttribute(
+          'position',
+          new THREE.BufferAttribute(buildArcPositions(from, to), 3),
+        )
         const mat = new THREE.LineBasicMaterial({
           color,
           transparent: true,
-          opacity: 0.3,
+          opacity: 0.22,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
         })
-
         result.push({ line: new THREE.Line(geo, mat), key: edgeKey })
       })
     })
-
     return result
-  }, [nodes, posMap, filter])
+  }, [nodes, filter])
 
   return (
     <>
@@ -205,87 +348,137 @@ function ConnectionLines({ nodes, posMap, filter }: ConnectionLinesProps) {
   )
 }
 
-// ── Packet dots moving along connections ─────────────────────────────────────
+// ── Packet dots with glowing trails ──────────────────────────────────────────
 
-interface PacketData {
-  fromPos: [number, number, number]
-  toPos: [number, number, number]
+interface GlobePacket {
+  from:     [number, number, number]
+  to:       [number, number, number]
   progress: number
-  speed: number
-  color: string
+  speed:    number
+  color:    string
 }
 
-function PacketDots({
-  nodes,
-  posMap,
-}: {
-  nodes: NetworkNode[]
-  posMap: Map<string, [number, number, number]>
-}) {
-  const groupRef = useRef<THREE.Group>(null)
-
-  const packets = useMemo<PacketData[]>(() => {
+function GlobePacketDots({ nodes }: { nodes: NetworkNode[] }) {
+  const packets = useMemo<GlobePacket[]>(() => {
     const nodeMap = new Map(nodes.map((n) => [n.id, n]))
-    const result: PacketData[] = []
+    const result: GlobePacket[] = []
     let seed = 0
 
-    nodes.slice(0, 25).forEach((node) => {
+    nodes.slice(0, 22).forEach((node) => {
       const targetId = node.connections[0]
       if (!targetId) return
       const target = nodeMap.get(targetId)
       if (!target) return
 
-      const from = posMap.get(node.id)
-      const to = posMap.get(target.id)
-      if (!from || !to) return
-
       result.push({
-        fromPos: from,
-        toPos: to,
-        progress: (seed++ / 25),
-        speed: 0.004 + ((hashStr(node.id) & 0xff) / 255) * 0.006,
-        color: NODE_COLOR[node.type] ?? '#ffffff',
+        from:     latLngToVector3(node.lat, node.lng, GLOBE_RADIUS + 0.045),
+        to:       latLngToVector3(target.lat, target.lng, GLOBE_RADIUS + 0.045),
+        progress: seed++ / 22,
+        speed:    0.003 + ((hashStr(node.id) & 0xff) / 255) * 0.0042,
+        color:    NODE_COLOR[node.type] ?? '#ffffff',
       })
     })
     return result
-  }, [nodes, posMap])
+  }, [nodes])
 
-  const progressRef = useRef<number[]>(packets.map((p) => p.progress))
-  const meshRefs = useRef<(THREE.Mesh | null)[]>([])
+  const progressRef  = useRef<number[]>([])
+  const headRefs     = useRef<(THREE.Mesh | null)[]>([])
+  const trailRefs    = useRef<(THREE.Mesh | null)[][]>([])
+  const trailHistory = useRef<THREE.Vector3[][]>([])
+
+  useEffect(() => {
+    progressRef.current  = packets.map((p) => p.progress)
+    trailHistory.current = packets.map(() =>
+      Array.from({ length: TRAIL_LENGTH }, () => new THREE.Vector3()),
+    )
+  }, [packets])
 
   useFrame(() => {
     packets.forEach((pkt, i) => {
+      if (progressRef.current[i] === undefined) return
       progressRef.current[i] = (progressRef.current[i] + pkt.speed) % 1
       const t = progressRef.current[i]
 
-      const from = new THREE.Vector3(...pkt.fromPos)
-      const to = new THREE.Vector3(...pkt.toPos)
-      const pos = from.lerp(to, t)
+      const start = new THREE.Vector3(...pkt.from)
+      const end   = new THREE.Vector3(...pkt.to)
+      const mid   = start.clone().lerp(end, 0.5)
+      mid.normalize().multiplyScalar(start.length() + GLOBE_RADIUS * 0.11)
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end)
+      const pos   = curve.getPoint(t)
 
-      const mesh = meshRefs.current[i]
-      if (mesh) mesh.position.copy(pos)
+      const head = headRefs.current[i]
+      if (head) head.position.copy(pos)
+
+      // Shift trail history
+      const history = trailHistory.current[i]
+      if (history) {
+        for (let j = TRAIL_LENGTH - 1; j > 0; j--) history[j].copy(history[j - 1])
+        history[0].copy(pos)
+
+        trailRefs.current[i]?.forEach((mesh, ti) => {
+          if (mesh && history[ti]) {
+            mesh.position.copy(history[ti])
+            ;(mesh.material as THREE.MeshBasicMaterial).opacity =
+              (1 - ti / TRAIL_LENGTH) * 0.55
+          }
+        })
+      }
     })
   })
 
   return (
-    <group ref={groupRef}>
+    <group>
       {packets.map((pkt, i) => (
-        <mesh
-          key={i}
-          ref={(el) => { meshRefs.current[i] = el }}
-        >
-          <sphereGeometry args={[0.028, 6, 6]} />
-          <meshBasicMaterial
-            color={pkt.color}
-            transparent
-            opacity={0.9}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
+        <group key={i}>
+          {/* Packet head */}
+          <mesh ref={(el) => { headRefs.current[i] = el }}>
+            <sphereGeometry args={[0.028, 6, 6]} />
+            <meshBasicMaterial
+              color={pkt.color}
+              transparent
+              opacity={0.95}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* Trail particles */}
+          {Array.from({ length: TRAIL_LENGTH }, (_, ti) => (
+            <mesh
+              key={ti}
+              ref={(el) => {
+                if (!trailRefs.current[i]) trailRefs.current[i] = []
+                trailRefs.current[i][ti] = el
+              }}
+            >
+              <sphereGeometry
+                args={[Math.max(0.006, 0.022 * (1 - ti / TRAIL_LENGTH)), 4, 4]}
+              />
+              <meshBasicMaterial
+                color={pkt.color}
+                transparent
+                opacity={0}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          ))}
+        </group>
       ))}
     </group>
   )
+}
+
+// ── Scene-level subtle drift controller ──────────────────────────────────────
+
+function SceneDrift({ orbitRef }: { orbitRef: React.RefObject<{ target: THREE.Vector3 } | null> }) {
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    if (orbitRef.current) {
+      orbitRef.current.target.y = Math.sin(t * 0.09) * 0.18
+    }
+  })
+  return null
 }
 
 // ── Main scene ────────────────────────────────────────────────────────────────
@@ -295,83 +488,92 @@ export interface NetworkSceneProps {
 }
 
 export default function NetworkScene({ filter }: NetworkSceneProps) {
-  const nodes = useAppStore((s) => s.nodes)
-  const selectedNode = useAppStore((s) => s.selectedNode)
-  const hoveredNode = useAppStore((s) => s.hoveredNode)
+  const nodes         = useAppStore((s) => s.nodes)
+  const selectedNode  = useAppStore((s) => s.selectedNode)
+  const hoveredNode   = useAppStore((s) => s.hoveredNode)
   const setSelectedNode = useAppStore((s) => s.setSelectedNode)
-  const setHoveredNode = useAppStore((s) => s.setHoveredNode)
+  const setHoveredNode  = useAppStore((s) => s.setHoveredNode)
+
+  const orbitRef = useRef<{ target: THREE.Vector3 } | null>(null)
 
   const handleHover = useCallback(
     (id: string | null) => setHoveredNode(id),
-    [setHoveredNode]
+    [setHoveredNode],
   )
 
   const handleSelect = useCallback(
     (node: NetworkNode) => {
       setSelectedNode(selectedNode?.id === node.id ? null : node)
     },
-    [selectedNode, setSelectedNode]
+    [selectedNode, setSelectedNode],
   )
 
-  // Stable positions keyed by node id
-  const posMap = useMemo(() => {
+  const nodePositions = useMemo(() => {
     const m = new Map<string, [number, number, number]>()
-    nodes.forEach((n) => m.set(n.id, nodePosition(n.id)))
+    nodes.forEach((n) =>
+      m.set(n.id, latLngToVector3(n.lat, n.lng, GLOBE_RADIUS + 0.045)),
+    )
     return m
   }, [nodes])
 
   return (
     <>
       {/* Lighting */}
-      <ambientLight intensity={0.25} color="#1a1a2e" />
-      <pointLight position={[5, 5, 5]} intensity={2} color="#38bdf8" distance={25} />
-      <pointLight position={[-5, -3, -3]} intensity={1.2} color="#818cf8" distance={20} />
-      <pointLight position={[0, 8, 2]} intensity={0.6} color="#ffffff" distance={18} />
+      <ambientLight intensity={0.18} color="#0c1825" />
+      <pointLight position={[10, 7, 10]}  intensity={3.5} color="#38bdf8" distance={50} />
+      <pointLight position={[-9, -5, -7]} intensity={1.8} color="#818cf8" distance={35} />
+      <pointLight position={[0, 12, 2]}   intensity={1.0} color="#ffffff"  distance={30} />
+      <pointLight position={[0, -10, 0]}  intensity={0.6} color="#6effc7"  distance={25} />
 
-      {/* Fog */}
-      <fog attach="fog" args={['#020b18', 18, 35]} />
+      {/* Globe */}
+      <GlobeBase />
 
-      {/* Connection lines */}
-      <ConnectionLines nodes={nodes} posMap={posMap} filter={filter} />
+      {/* Arc connections */}
+      <GlobeArcs nodes={nodes} filter={filter} />
 
-      {/* Packet animations */}
-      <PacketDots nodes={nodes} posMap={posMap} />
+      {/* Packet dots + trails */}
+      <GlobePacketDots nodes={nodes} />
 
-      {/* Node spheres */}
+      {/* Node markers */}
       {nodes.map((node) => {
-        const pos = posMap.get(node.id)
+        const pos = nodePositions.get(node.id)
         if (!pos) return null
-        const isFiltered = filter !== 'all' && node.type !== filter
         return (
-          <NodeSphere
+          <NodeMarker
             key={node.id}
             node={node}
             position={pos}
             isSelected={selectedNode?.id === node.id}
             isHovered={hoveredNode === node.id}
-            isFiltered={isFiltered}
+            isFiltered={filter !== 'all' && node.type !== filter}
             onHover={handleHover}
             onSelect={handleSelect}
           />
         )
       })}
 
-      {/* Controls */}
+      {/* Subtle axis drift */}
+      <SceneDrift orbitRef={orbitRef as React.RefObject<{ target: THREE.Vector3 } | null>} />
+
+      {/* Orbit controls — auto-rotating globe */}
       <OrbitControls
-        enablePan
+        ref={orbitRef as React.RefObject<any>}
+        enablePan={false}
         enableZoom
         enableRotate
-        minDistance={3}
-        maxDistance={20}
-        dampingFactor={0.08}
+        minDistance={5.5}
+        maxDistance={18}
+        dampingFactor={0.06}
         enableDamping
+        autoRotate
+        autoRotateSpeed={0.35}
       />
 
       {/* Post-processing */}
       <EffectComposer>
         <Bloom
-          intensity={1.2}
-          luminanceThreshold={0.2}
+          intensity={1.7}
+          luminanceThreshold={0.14}
           luminanceSmoothing={0.85}
           mipmapBlur
         />

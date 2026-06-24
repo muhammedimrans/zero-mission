@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -152,6 +152,78 @@ function Connection({ from, to, color, animated = false, speed = 0.5, highlighte
   )
 }
 
+// ── Visibility cone from attacker ────────────────────────────────────────────
+
+interface VisibilityConeProps {
+  from:   [number, number, number]
+  to:     [number, number, number]
+  color?: string
+}
+
+function VisibilityCone({ from, to, color = RED }: VisibilityConeProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const matRef  = useRef<THREE.MeshBasicMaterial>(null)
+
+  const [pos, quat, height] = useMemo<[[number,number,number], THREE.Quaternion, number]>(() => {
+    const start = new THREE.Vector3(...from)
+    const end   = new THREE.Vector3(...to)
+    const dir   = end.clone().sub(start)
+    const h     = dir.length()
+    const mid   = start.clone().add(end).multiplyScalar(0.5)
+    const q     = new THREE.Quaternion()
+    q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize())
+    return [[mid.x, mid.y, mid.z], q, h]
+  }, [from, to])
+
+  useFrame(({ clock }) => {
+    if (matRef.current) {
+      matRef.current.opacity = 0.06 + Math.abs(Math.sin(clock.getElapsedTime() * 1.8)) * 0.05
+    }
+  })
+
+  return (
+    <mesh position={pos} quaternion={quat} ref={meshRef}>
+      <coneGeometry args={[0.28, height, 16, 1, true]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color={color}
+        transparent
+        opacity={0.08}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  )
+}
+
+// ── Hidden segment indicator (dim + dashed-style) ─────────────────────────────
+
+interface HiddenSegmentProps {
+  from: [number, number, number]
+  to:   [number, number, number]
+}
+
+function HiddenSegment({ from, to }: HiddenSegmentProps) {
+  const lineObj = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([...from, ...to]), 3))
+    const mat = new THREE.LineDashedMaterial({
+      color: '#9aa4af',
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      dashSize: 0.18,
+      gapSize: 0.12,
+    })
+    const line = new THREE.Line(geo, mat)
+    line.computeLineDistances()
+    return line
+  }, [from, to])
+
+  return <primitive object={lineObj} />
+}
+
 // ── Network base layout ────────────────────────────────────────────────────────
 
 const CLIENT_POS: [number, number, number] = [-4, 0, 0]
@@ -179,27 +251,36 @@ const NATION_ATKS: Array<[number, number, number]> = [
 function ISPMonitoringScene() {
   return (
     <group>
+      {/* ISP visibility cone */}
+      <VisibilityCone from={ISP_ATK_POS} to={CLIENT_POS} />
+      <VisibilityCone from={ISP_ATK_POS} to={GUARD_POS}  />
+
       {/* Normal nodes */}
-      <NodeSphere position={CLIENT_POS} color={COLORS.white} label="Client" />
-      <NodeSphere position={GUARD_POS} color={COLORS.guard} label="Guard" />
-      <NodeSphere position={MIX1_POS} color={COLORS.mix} label="Mix-1" />
-      <NodeSphere position={MIX2_POS} color={COLORS.mix} label="Mix-2" />
-      <NodeSphere position={EXIT_POS} color={COLORS.exit} label="Exit" />
-      <NodeSphere position={DEST_POS} color={COLORS.white} label="Destination" />
+      <NodeSphere position={CLIENT_POS} color={COLORS.white}  label="Client"      />
+      <NodeSphere position={GUARD_POS}  color={COLORS.guard}  label="Guard"       />
+      <NodeSphere position={MIX1_POS}   color={COLORS.mix}    label="Mix-1"       />
+      <NodeSphere position={MIX2_POS}   color={COLORS.mix}    label="Mix-2"       />
+      <NodeSphere position={EXIT_POS}   color={COLORS.exit}   label="Exit"        />
+      <NodeSphere position={DEST_POS}   color={COLORS.white}  label="Destination" />
 
       {/* Attacker */}
       <NodeSphere position={ISP_ATK_POS} color={RED} label="ISP Attacker" pulse flash />
 
-      {/* Normal connections */}
-      <Connection from={GUARD_POS} to={MIX1_POS} color={COLORS.mix} animated speed={0.4} />
-      <Connection from={MIX1_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.45} />
-      <Connection from={MIX2_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.4} />
-      <Connection from={EXIT_POS} to={DEST_POS} color={COLORS.exit} animated speed={0.5} />
+      {/* Visible to ISP — highlighted */}
+      <Connection from={CLIENT_POS} to={GUARD_POS}  color={RED}          animated speed={0.6} highlighted />
+      <Connection from={ISP_ATK_POS} to={CLIENT_POS} color={RED}          highlighted />
+      <Connection from={ISP_ATK_POS} to={GUARD_POS}  color={RED}          highlighted />
 
-      {/* ISP watching client→guard */}
-      <Connection from={CLIENT_POS} to={GUARD_POS} color={RED} animated speed={0.6} highlighted />
-      <Connection from={ISP_ATK_POS} to={CLIENT_POS} color={RED} highlighted />
-      <Connection from={ISP_ATK_POS} to={GUARD_POS} color={RED} highlighted />
+      {/* Hidden from ISP — dim dashed */}
+      <HiddenSegment from={GUARD_POS}  to={MIX1_POS} />
+      <HiddenSegment from={MIX1_POS}   to={EXIT_POS} />
+      <HiddenSegment from={MIX2_POS}   to={EXIT_POS} />
+      <HiddenSegment from={EXIT_POS}   to={DEST_POS} />
+
+      {/* Animated packets on hidden path */}
+      <Connection from={GUARD_POS} to={MIX1_POS} color={COLORS.mix}  animated speed={0.4} />
+      <Connection from={MIX1_POS}  to={EXIT_POS} color={COLORS.mix}  animated speed={0.45}/>
+      <Connection from={EXIT_POS}  to={DEST_POS} color={COLORS.exit} animated speed={0.5} />
     </group>
   )
 }
@@ -207,29 +288,31 @@ function ISPMonitoringScene() {
 function TrafficAnalysisScene() {
   return (
     <group>
-      <NodeSphere position={CLIENT_POS} color={COLORS.white} label="Client" />
-      <NodeSphere position={GUARD_POS} color={COLORS.guard} label="Guard" />
-      <NodeSphere position={MIX1_POS} color={COLORS.mix} label="Mix-1" />
-      <NodeSphere position={MIX2_POS} color={COLORS.mix} label="Mix-2" />
-      <NodeSphere position={EXIT_POS} color={COLORS.exit} label="Exit" />
-      <NodeSphere position={DEST_POS} color={COLORS.white} label="Destination" />
+      {/* Observation cones */}
+      <VisibilityCone from={TRAFFIC_ATK1} to={CLIENT_POS} color={ORANGE} />
+      <VisibilityCone from={TRAFFIC_ATK2} to={MIX1_POS}   color={ORANGE} />
+      <VisibilityCone from={TRAFFIC_ATK3} to={DEST_POS}   color={ORANGE} />
 
-      {/* Multiple attackers observing timing */}
-      <NodeSphere position={TRAFFIC_ATK1} color={RED} label="Observer-1" flash />
-      <NodeSphere position={TRAFFIC_ATK2} color={RED} label="Observer-2" flash />
-      <NodeSphere position={TRAFFIC_ATK3} color={RED} label="Observer-3" flash />
+      <NodeSphere position={CLIENT_POS}   color={COLORS.white}  label="Client"      />
+      <NodeSphere position={GUARD_POS}    color={COLORS.guard}  label="Guard"       />
+      <NodeSphere position={MIX1_POS}     color={COLORS.mix}    label="Mix-1"       />
+      <NodeSphere position={MIX2_POS}     color={COLORS.mix}    label="Mix-2"       />
+      <NodeSphere position={EXIT_POS}     color={COLORS.exit}   label="Exit"        />
+      <NodeSphere position={DEST_POS}     color={COLORS.white}  label="Destination" />
 
-      {/* Connections */}
-      <Connection from={CLIENT_POS} to={GUARD_POS} color={COLORS.guard} animated speed={0.5} />
-      <Connection from={GUARD_POS} to={MIX1_POS} color={COLORS.mix} animated speed={0.45} />
-      <Connection from={GUARD_POS} to={MIX2_POS} color={COLORS.mix} animated speed={0.4} />
-      <Connection from={MIX1_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.5} />
-      <Connection from={EXIT_POS} to={DEST_POS} color={COLORS.exit} animated speed={0.45} />
+      <NodeSphere position={TRAFFIC_ATK1} color={RED}    label="Observer-1" flash />
+      <NodeSphere position={TRAFFIC_ATK2} color={ORANGE} label="Observer-2" flash />
+      <NodeSphere position={TRAFFIC_ATK3} color={RED}    label="Observer-3" flash />
 
-      {/* Observation lines */}
+      <Connection from={CLIENT_POS} to={GUARD_POS}  color={COLORS.guard} animated speed={0.5}  />
+      <Connection from={GUARD_POS}  to={MIX1_POS}   color={COLORS.mix}   animated speed={0.45} />
+      <Connection from={GUARD_POS}  to={MIX2_POS}   color={COLORS.mix}   animated speed={0.4}  />
+      <Connection from={MIX1_POS}   to={EXIT_POS}   color={COLORS.mix}   animated speed={0.5}  />
+      <Connection from={EXIT_POS}   to={DEST_POS}   color={COLORS.exit}  animated speed={0.45} />
+
       <Connection from={TRAFFIC_ATK1} to={CLIENT_POS} color={ORANGE} highlighted />
-      <Connection from={TRAFFIC_ATK2} to={MIX1_POS} color={ORANGE} highlighted />
-      <Connection from={TRAFFIC_ATK3} to={DEST_POS} color={ORANGE} highlighted />
+      <Connection from={TRAFFIC_ATK2} to={MIX1_POS}   color={ORANGE} highlighted />
+      <Connection from={TRAFFIC_ATK3} to={DEST_POS}   color={ORANGE} highlighted />
     </group>
   )
 }
@@ -258,103 +341,137 @@ function MaliciousRelayScene() {
 function ExitSurveillanceScene() {
   return (
     <group>
-      <NodeSphere position={CLIENT_POS} color={COLORS.white} label="Client" />
-      <NodeSphere position={GUARD_POS} color={COLORS.guard} label="Guard" />
-      <NodeSphere position={MIX1_POS} color={COLORS.mix} label="Mix-1" />
-      <NodeSphere position={MIX2_POS} color={COLORS.mix} label="Mix-2" />
-      {/* Malicious exit */}
-      <NodeSphere position={EXIT_POS} color={ORANGE} label="Malicious Exit" pulse flash />
-      <NodeSphere position={DEST_POS} color={COLORS.white} label="Destination" />
+      {/* Exit watching outbound */}
+      <VisibilityCone from={EXIT_POS} to={DEST_POS} color={ORANGE} />
 
-      {/* Connections */}
-      <Connection from={CLIENT_POS} to={GUARD_POS} color={COLORS.guard} animated speed={0.5} />
-      <Connection from={GUARD_POS} to={MIX1_POS} color={COLORS.mix} animated speed={0.45} />
-      <Connection from={MIX1_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.4} />
-      <Connection from={MIX2_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.35} />
-      <Connection from={EXIT_POS} to={DEST_POS} color={ORANGE} animated speed={0.5} highlighted />
+      <NodeSphere position={CLIENT_POS} color={COLORS.white}  label="Client"         />
+      <NodeSphere position={GUARD_POS}  color={COLORS.guard}  label="Guard"          />
+      <NodeSphere position={MIX1_POS}   color={COLORS.mix}    label="Mix-1"          />
+      <NodeSphere position={MIX2_POS}   color={COLORS.mix}    label="Mix-2"          />
+      <NodeSphere position={EXIT_POS}   color={ORANGE}        label="Malicious Exit" pulse flash />
+      <NodeSphere position={DEST_POS}   color={COLORS.white}  label="Destination"    />
+
+      <Connection from={CLIENT_POS} to={GUARD_POS}  color={COLORS.guard} animated speed={0.5}  />
+      <Connection from={GUARD_POS}  to={MIX1_POS}   color={COLORS.mix}   animated speed={0.45} />
+      <Connection from={MIX1_POS}   to={EXIT_POS}   color={COLORS.mix}   animated speed={0.4}  />
+      <Connection from={MIX2_POS}   to={EXIT_POS}   color={COLORS.mix}   animated speed={0.35} />
+      <Connection from={EXIT_POS}   to={DEST_POS}   color={ORANGE}       animated speed={0.5} highlighted />
+
+      {/* Hidden hops — dim */}
+      <HiddenSegment from={CLIENT_POS} to={GUARD_POS} />
+      <HiddenSegment from={GUARD_POS}  to={MIX1_POS}  />
     </group>
   )
 }
 
 function NationStateScene() {
+  const targets: Array<[number, number, number]> = [
+    CLIENT_POS, GUARD_POS, MIX1_POS, EXIT_POS, DEST_POS,
+  ]
   return (
     <group>
-      <NodeSphere position={CLIENT_POS} color={COLORS.white} label="Client" />
-      <NodeSphere position={GUARD_POS} color={COLORS.guard} label="Guard" />
-      <NodeSphere position={MIX1_POS} color={COLORS.mix} label="Mix-1" />
-      <NodeSphere position={MIX2_POS} color={COLORS.mix} label="Mix-2" />
-      <NodeSphere position={EXIT_POS} color={COLORS.exit} label="Exit" />
-      <NodeSphere position={DEST_POS} color={COLORS.white} label="Destination" />
-
-      {/* Nation-state adversary nodes */}
+      {/* Surveillance cones */}
       {NATION_ATKS.map((pos, i) => (
-        <NodeSphere
-          key={i}
-          position={pos}
-          color={RED}
-          label={`NSA-${i + 1}`}
-          flash
-          size={0.13}
-        />
+        <VisibilityCone key={`cone${i}`} from={pos} to={targets[i % targets.length]} />
       ))}
 
-      {/* Connections */}
-      <Connection from={CLIENT_POS} to={GUARD_POS} color={COLORS.guard} animated speed={0.5} />
-      <Connection from={GUARD_POS} to={MIX1_POS} color={COLORS.mix} animated speed={0.45} />
-      <Connection from={GUARD_POS} to={MIX2_POS} color={COLORS.mix} animated speed={0.4} />
-      <Connection from={MIX1_POS} to={EXIT_POS} color={COLORS.mix} animated speed={0.5} />
-      <Connection from={EXIT_POS} to={DEST_POS} color={COLORS.exit} animated speed={0.45} />
+      <NodeSphere position={CLIENT_POS} color={COLORS.white}  label="Client"      />
+      <NodeSphere position={GUARD_POS}  color={COLORS.guard}  label="Guard"       />
+      <NodeSphere position={MIX1_POS}   color={COLORS.mix}    label="Mix-1"       />
+      <NodeSphere position={MIX2_POS}   color={COLORS.mix}    label="Mix-2"       />
+      <NodeSphere position={EXIT_POS}   color={COLORS.exit}   label="Exit"        />
+      <NodeSphere position={DEST_POS}   color={COLORS.white}  label="Destination" />
 
-      {/* Attack surveillance lines */}
-      {NATION_ATKS.map((pos, i) => {
-        const targets: Array<[number, number, number]> = [
-          CLIENT_POS, GUARD_POS, MIX1_POS, EXIT_POS, DEST_POS,
-        ]
-        return (
-          <Connection
-            key={`atk${i}`}
-            from={pos}
-            to={targets[i % targets.length]}
-            color={RED}
-            highlighted
-          />
-        )
-      })}
+      {NATION_ATKS.map((pos, i) => (
+        <NodeSphere key={i} position={pos} color={RED} label={`NSA-${i + 1}`} flash size={0.13} />
+      ))}
+
+      <Connection from={CLIENT_POS} to={GUARD_POS}  color={COLORS.guard} animated speed={0.5}  />
+      <Connection from={GUARD_POS}  to={MIX1_POS}   color={COLORS.mix}   animated speed={0.45} />
+      <Connection from={GUARD_POS}  to={MIX2_POS}   color={COLORS.mix}   animated speed={0.4}  />
+      <Connection from={MIX1_POS}   to={EXIT_POS}   color={COLORS.mix}   animated speed={0.5}  />
+      <Connection from={EXIT_POS}   to={DEST_POS}   color={COLORS.exit}  animated speed={0.45} />
+
+      {NATION_ATKS.map((pos, i) => (
+        <Connection key={`atk${i}`} from={pos} to={targets[i % targets.length]} color={RED} highlighted />
+      ))}
     </group>
+  )
+}
+
+// ── Fade overlay for attack transitions ──────────────────────────────────────
+
+function FadeOverlay({ fade }: { fade: number }) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  useFrame(({ camera }) => {
+    if (meshRef.current) {
+      // Position overlay just in front of camera
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+      meshRef.current.position.copy(camera.position).addScaledVector(dir, 0.5)
+      meshRef.current.quaternion.copy(camera.quaternion)
+      ;(meshRef.current.material as THREE.MeshBasicMaterial).opacity = fade
+    }
+  })
+  if (fade <= 0) return null
+  return (
+    <mesh ref={meshRef}>
+      <planeGeometry args={[4, 4]} />
+      <meshBasicMaterial
+        color="#08090a"
+        transparent
+        opacity={fade}
+        depthWrite={false}
+      />
+    </mesh>
   )
 }
 
 // ── Main scene ────────────────────────────────────────────────────────────────
 
 export default function ThreatScene({ attack }: ThreatSceneProps) {
-  const groupRef = useRef<THREE.Group>(null)
+  const groupRef  = useRef<THREE.Group>(null)
+  const [fade, setFade]   = useState(0)
+  const fadeRef   = useRef(0)
+  const prevAttack = useRef(attack)
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.12) * 0.18
+    }
+
+    // Trigger fade on attack change
+    if (prevAttack.current !== attack) {
+      prevAttack.current = attack
+      fadeRef.current = 1
+    }
+    if (fadeRef.current > 0) {
+      fadeRef.current = Math.max(0, fadeRef.current - delta * 3)
+      setFade(fadeRef.current)
     }
   })
 
   return (
     <>
       <ambientLight intensity={0.25} color="#1a1a2e" />
-      <pointLight position={[3, 5, 5]} intensity={2} color={COLORS.neonBlue} distance={20} />
-      <pointLight position={[-5, -3, -3]} intensity={1.5} color={RED} distance={15} />
-      <pointLight position={[0, 6, 2]} intensity={0.8} color="#ffffff" distance={12} />
-      <fog attach="fog" args={['#020b18', 15, 30]} />
+      <pointLight position={[3, 5, 5]}   intensity={2.2} color={COLORS.neonBlue} distance={22} />
+      <pointLight position={[-5, -3, -3]} intensity={1.8} color={RED}            distance={18} />
+      <pointLight position={[0, 6, 2]}   intensity={0.8} color="#ffffff"         distance={14} />
+      <fog attach="fog" args={['#08090a', 18, 35]} />
 
       <group ref={groupRef}>
-        {attack === 'isp' && <ISPMonitoringScene />}
+        {attack === 'isp'     && <ISPMonitoringScene />}
         {attack === 'traffic' && <TrafficAnalysisScene />}
-        {attack === 'relay' && <MaliciousRelayScene />}
-        {attack === 'exit' && <ExitSurveillanceScene />}
-        {attack === 'nation' && <NationStateScene />}
+        {attack === 'relay'   && <MaliciousRelayScene />}
+        {attack === 'exit'    && <ExitSurveillanceScene />}
+        {attack === 'nation'  && <NationStateScene />}
       </group>
+
+      <FadeOverlay fade={fade} />
 
       <EffectComposer>
         <Bloom
-          intensity={1.6}
-          luminanceThreshold={0.15}
+          intensity={1.8}
+          luminanceThreshold={0.14}
           luminanceSmoothing={0.85}
           mipmapBlur
         />

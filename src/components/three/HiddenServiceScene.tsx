@@ -280,38 +280,53 @@ function Step4Scene() {
 }
 
 function Step5Scene() {
-  const clientPos: [number, number, number] = [-3.5, 0, 0]
-  const guard: [number, number, number] = [-2, 0.8, 0]
-  const mix1: [number, number, number] = [-0.8, -0.5, 0]
+  const clientPos:  [number, number, number] = [-3.5, 0, 0]
+  const guard:      [number, number, number] = [-2, 0.8, 0]
+  const mix1:       [number, number, number] = [-0.8, -0.5, 0]
   const rendezvous: [number, number, number] = [0.5, 0.5, 0]
-  const mix2: [number, number, number] = [1.8, -0.3, 0]
-  const exitN: [number, number, number] = [2.8, 0.6, 0]
+  const mix2:       [number, number, number] = [1.8, -0.3, 0]
+  const exitN:      [number, number, number] = [2.8, 0.6, 0]
   const servicePos: [number, number, number] = [3.5, 0, 0]
 
   const hops: Array<{ from: [number, number, number]; to: [number, number, number]; color: string }> = [
-    { from: clientPos, to: guard, color: COLORS.guard },
-    { from: guard, to: mix1, color: COLORS.mix },
-    { from: mix1, to: rendezvous, color: COLORS.neonBlue },
-    { from: rendezvous, to: mix2, color: COLORS.mix },
-    { from: mix2, to: exitN, color: COLORS.exit },
-    { from: exitN, to: servicePos, color: COLORS.purple },
+    { from: clientPos,  to: guard,       color: COLORS.guard   },
+    { from: guard,      to: mix1,        color: COLORS.mix     },
+    { from: mix1,       to: rendezvous,  color: COLORS.neonBlue},
+    { from: rendezvous, to: mix2,        color: COLORS.mix     },
+    { from: mix2,       to: exitN,       color: COLORS.exit    },
+    { from: exitN,      to: servicePos,  color: COLORS.purple  },
   ]
 
   return (
     <group>
-      <NodeSphere position={clientPos} color={COLORS.white} label="Client" size={0.15} />
-      <NodeSphere position={guard} color={COLORS.guard} label="Guard" size={0.12} />
-      <NodeSphere position={mix1} color={COLORS.mix} label="Mix" size={0.12} />
-      <NodeSphere position={rendezvous} color={COLORS.neonBlue} label="Rendezvous" size={0.16} pulse />
-      <NodeSphere position={mix2} color={COLORS.mix} label="Mix" size={0.12} />
-      <NodeSphere position={exitN} color={COLORS.exit} label="Exit" size={0.12} />
-      <NodeSphere position={servicePos} color={COLORS.purple} label="Service" size={0.15} />
+      <NodeSphere position={clientPos}  color={COLORS.white}    label="Client"      size={0.15} />
+      <NodeSphere position={guard}      color={COLORS.guard}    label="Guard"       size={0.12} />
+      <NodeSphere position={mix1}       color={COLORS.mix}      label="Mix"         size={0.12} />
+      <NodeSphere position={rendezvous} color={COLORS.neonBlue} label="Rendezvous"  size={0.18} pulse />
+      <NodeSphere position={mix2}       color={COLORS.mix}      label="Mix"         size={0.12} />
+      <NodeSphere position={exitN}      color={COLORS.exit}     label="Exit"        size={0.12} />
+      <NodeSphere position={servicePos} color={COLORS.purple}   label="Service"     size={0.15} />
+
+      {/* Forward stream — mint tint */}
       {hops.map((h, i) => (
-        <AnimatedLine key={i} from={h.from} to={h.to} color={h.color} speed={0.4 + i * 0.05} />
+        <AnimatedLine
+          key={`fwd-${i}`}
+          from={h.from}
+          to={h.to}
+          color={COLORS.primary ?? '#6effc7'}
+          speed={0.42 + i * 0.04}
+        />
       ))}
-      {/* Return path - reversed */}
+
+      {/* Return stream — purple tint, slightly slower */}
       {hops.slice().reverse().map((h, i) => (
-        <AnimatedLine key={`r${i}`} from={h.to} to={h.from} color={h.color} speed={0.3 + i * 0.04} />
+        <AnimatedLine
+          key={`ret-${i}`}
+          from={h.to}
+          to={h.from}
+          color={COLORS.purple}
+          speed={0.32 + i * 0.035}
+        />
       ))}
     </group>
   )

@@ -31,86 +31,108 @@ const HERO_NODES: HeroChainNode[] = [
 
 function HeroChain() {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-      }}
-    >
-      {HERO_NODES.map((node, i) => (
-        <div key={node.label} style={{ display: 'flex', alignItems: 'center' }}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.4 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: node.delay, duration: 0.5, ease: 'easeOut' }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
-          >
-            {/* Node circle */}
+    <>
+      <style>{`
+        @keyframes flow-right {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        @keyframes node-pulse {
+          0%, 100% { box-shadow: var(--pulse-shadow-lo); }
+          50%       { box-shadow: var(--pulse-shadow-hi); }
+        }
+      `}</style>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
+        {HERO_NODES.map((node, i) => (
+          <div key={node.label} style={{ display: 'flex', alignItems: 'center' }}>
             <motion.div
-              animate={{
-                boxShadow: [
-                  `0 0 8px ${node.color}60`,
-                  `0 0 20px ${node.color}`,
-                  `0 0 8px ${node.color}60`,
-                ],
-              }}
-              transition={{ duration: 2, repeat: Infinity, delay: node.delay }}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: `${node.color}22`,
-                border: `2px solid ${node.color}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              initial={{ opacity: 0, scale: 0.3 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: node.delay, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
             >
-              <div
+              {/* Node circle with continuous pulse */}
+              <motion.div
                 style={{
-                  width: 12,
-                  height: 12,
+                  '--pulse-shadow-lo': `0 0 8px ${node.color}55`,
+                  '--pulse-shadow-hi': `0 0 24px ${node.color}, 0 0 44px ${node.color}55`,
+                  width: 44,
+                  height: 44,
                   borderRadius: '50%',
-                  background: node.color,
+                  background: `${node.color}18`,
+                  border: `2px solid ${node.color}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  animation: `node-pulse 2.2s ease-in-out ${node.delay}s infinite`,
+                } as React.CSSProperties}
+              >
+                <motion.div
+                  animate={{ scale: [0.85, 1, 0.85] }}
+                  transition={{ duration: 2.2, repeat: Infinity, delay: node.delay }}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: '50%',
+                    background: node.color,
+                    boxShadow: `0 0 10px ${node.color}`,
+                  }}
+                />
+              </motion.div>
+              <span
+                style={{
+                  color: node.color,
+                  fontSize: 9,
+                  fontFamily: 'var(--font-jetbrains-mono)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  opacity: 0.9,
                 }}
-              />
+              >
+                {node.label}
+              </span>
             </motion.div>
-            <span
-              style={{
-                color: node.color,
-                fontSize: 9,
-                fontFamily: 'var(--font-jetbrains-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                opacity: 0.85,
-              }}
-            >
-              {node.label}
-            </span>
-          </motion.div>
 
-          {/* Arrow connector */}
-          {i < HERO_NODES.length - 1 && (
-            <motion.div
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={{ delay: node.delay + 0.1, duration: 0.3 }}
-              style={{
-                width: 32,
-                height: 2,
-                background: `linear-gradient(90deg, ${node.color}60, ${HERO_NODES[i + 1].color}60)`,
-                position: 'relative',
-                marginBottom: 20,
-                transformOrigin: 'left center',
-              }}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+            {/* Flow connector with animated highlight */}
+            {i < HERO_NODES.length - 1 && (
+              <motion.div
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                transition={{ delay: node.delay + 0.12, duration: 0.35, ease: 'easeOut' }}
+                style={{
+                  width: 34,
+                  height: 2,
+                  background: `linear-gradient(90deg, ${node.color}50, ${HERO_NODES[i + 1].color}50)`,
+                  position: 'relative',
+                  marginBottom: 22,
+                  transformOrigin: 'left center',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Flowing light streak */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: `linear-gradient(90deg, transparent, ${node.color}, transparent)`,
+                    width: '50%',
+                    animation: `flow-right ${1.4 + i * 0.12}s linear ${node.delay + 0.4}s infinite`,
+                  }}
+                />
+              </motion.div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -118,20 +140,39 @@ function HeroChain() {
 
 function HeroPacket() {
   return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        width: 8,
-        height: 8,
-        borderRadius: '50%',
-        background: '#ffffff',
-        boxShadow: '0 0 12px #ffffff, 0 0 24px #38bdf8',
-        top: '38px',
-        left: 0,
-      }}
-      animate={{ left: ['0%', '95%'] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-    />
+    <>
+      {/* Ghost trail — 0.45s behind */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: COLORS.primary,
+          boxShadow: `0 0 10px ${COLORS.primary}80`,
+          top: '40px',
+          left: 0,
+          opacity: 0.45,
+        }}
+        animate={{ left: ['0%', '95%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear', delay: 0.45 }}
+      />
+      {/* Main packet */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          width: 9,
+          height: 9,
+          borderRadius: '50%',
+          background: '#ffffff',
+          boxShadow: `0 0 14px #ffffff, 0 0 28px ${COLORS.primary}`,
+          top: '38px',
+          left: 0,
+        }}
+        animate={{ left: ['0%', '95%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+      />
+    </>
   )
 }
 

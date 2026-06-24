@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo, useCallback } from 'react'
+import { useRef, useMemo, useCallback, useEffect, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -147,40 +147,78 @@ function BurstParticles({ color, active }: BurstParticlesProps) {
   )
 }
 
+// ── Route blinding scan plane ─────────────────────────────────────────────────
+
+function BlindingScanPlane() {
+  const meshRef = useRef<THREE.Mesh>(null)
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return
+    const t = clock.getElapsedTime()
+    // Sweep up and down through the cylinder height range (-1.6 to 1.6)
+    meshRef.current.position.y = Math.sin(t * 0.55) * 1.6
+    ;(meshRef.current.material as THREE.MeshBasicMaterial).opacity =
+      0.04 + Math.abs(Math.sin(t * 0.55)) * 0.06
+  })
+
+  return (
+    <mesh ref={meshRef} rotation={[0, 0, 0]}>
+      <cylinderGeometry args={[2.2, 2.2, 0.015, 64, 1, true]} />
+      <meshBasicMaterial
+        color={COLORS.primary ?? '#6effc7'}
+        transparent
+        opacity={0.06}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  )
+}
+
 // ── Single cylinder layer ─────────────────────────────────────────────────────
 
 interface CylinderLayerProps {
-  layer: SphinxLayer
-  peeled: boolean
-  isTop: boolean
+  layer:        SphinxLayer
+  peeled:       boolean
+  isTop:        boolean
   animProgress: number
+  revealT:      number
 }
 
-function CylinderLayer({ layer, peeled, isTop, animProgress }: CylinderLayerProps) {
+function CylinderLayer({ layer, peeled, isTop, animProgress, revealT }: CylinderLayerProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
 
   useFrame(() => {
     if (!meshRef.current || !glowRef.current) return
 
+    // Staggered reveal on mount (revealT: 0→1)
+    const revealScale = 0.6 + revealT * 0.4
+    const revealOpacity = revealT
+
     if (isTop && animProgress > 0) {
-      const scale = 1 + animProgress * 1.2
-      meshRef.current.scale.setScalar(scale)
-      glowRef.current.scale.setScalar(scale)
+      // Peel: expand + rotate + fade
+      const peelScale = revealScale * (1 + animProgress * 1.8)
+      meshRef.current.scale.setScalar(peelScale)
+      glowRef.current.scale.setScalar(peelScale)
+      meshRef.current.rotation.y = animProgress * Math.PI * 0.8
       const mat = meshRef.current.material as THREE.MeshStandardMaterial
-      mat.opacity = (1 - animProgress) * layer.opacity
+      mat.opacity = (1 - animProgress) * layer.opacity * revealOpacity
       const glowMat = glowRef.current.material as THREE.MeshBasicMaterial
-      glowMat.opacity = (1 - animProgress) * 0.12
+      glowMat.opacity = (1 - animProgress) * 0.14 * revealOpacity
     } else if (peeled) {
       meshRef.current.visible = false
       glowRef.current.visible = false
     } else {
       meshRef.current.visible = true
       glowRef.current.visible = true
-      meshRef.current.scale.setScalar(1)
-      glowRef.current.scale.setScalar(1)
+      meshRef.current.scale.setScalar(revealScale)
+      glowRef.current.scale.setScalar(revealScale)
+      meshRef.current.rotation.y = 0
       const mat = meshRef.current.material as THREE.MeshStandardMaterial
-      mat.opacity = layer.opacity
+      mat.opacity = layer.opacity * revealOpacity
+      // Briefly intensify when layer above was just peeled
     }
   })
 
@@ -239,47 +277,66 @@ function CylinderLayer({ layer, peeled, isTop, animProgress }: CylinderLayerProp
 
 // ── Main Sphinx Scene ─────────────────────────────────────────────────────────
 
-export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: SphinxSceneProps) {
-  const groupRef = useRef<THREE.Group>(null)
-  const animProgressRef = useRef(0)
-  const peelingRef = useRef(false)
-  const lastPeelRef = useRef(-1)
+const REVEAL_STAGGER = 0.22  // seconds between layer reveals
 
-  // Sync peeling state into ref for useFrame
+export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: SphinxSceneProps) {
+  const groupRef      = useRef<THREE.Group>(null)
+  const animProgressRef = useRef(0)
+  const peelingRef    = useRef(false)
+  const lastPeelRef   = useRef(-1)
+
+  // Per-layer reveal progress (0→1), driven by mount time
+  const [revealTs, setRevealTs] = useState<number[]>(LAYERS.map(() => 0))
+  const revealStartRef = useRef<number | null>(null)
+
   peelingRef.current = peeling
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     // Slow rotate
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.25
+      groupRef.current.rotation.y += delta * 0.22
     }
 
     // Animate peel
     if (peelingRef.current && lastPeelRef.current !== peeledCount) {
-      animProgressRef.current = Math.min(animProgressRef.current + delta * 2, 1)
+      animProgressRef.current = Math.min(animProgressRef.current + delta * 1.8, 1)
       if (animProgressRef.current >= 1) {
         lastPeelRef.current = peeledCount
         animProgressRef.current = 0
         onPeelComplete?.()
       }
     }
+
+    // Layer reveal animation on mount
+    if (revealStartRef.current === null) {
+      revealStartRef.current = clock.getElapsedTime()
+    }
+    const elapsed = clock.getElapsedTime() - revealStartRef.current
+    setRevealTs(
+      LAYERS.map((l) =>
+        Math.min(1, Math.max(0, (elapsed - l.index * REVEAL_STAGGER) / 0.45)),
+      ),
+    )
   })
 
   const visibleLayers = LAYERS.slice(peeledCount)
-  const topLayer = visibleLayers[0]
+  const topLayer      = visibleLayers[0]
 
   return (
     <>
       {/* Lights */}
-      <ambientLight intensity={0.3} color="#1a1a2e" />
-      <pointLight position={[4, 4, 4]} intensity={3} color={COLORS.neonBlue} distance={20} />
-      <pointLight position={[-4, -2, -4]} intensity={2} color={COLORS.purple} distance={15} />
-      <pointLight position={[0, 6, 2]} intensity={1} color="#ffffff" distance={12} />
+      <ambientLight intensity={0.28} color="#1a1a2e" />
+      <pointLight position={[4, 4, 4]}   intensity={3.2} color={COLORS.neonBlue} distance={22} />
+      <pointLight position={[-4, -2, -4]} intensity={2.2} color={COLORS.purple}  distance={18} />
+      <pointLight position={[0, 6, 2]}   intensity={1.2} color="#ffffff"         distance={14} />
 
       <group ref={groupRef}>
+        {/* Route blinding scan plane */}
+        <BlindingScanPlane />
+
         {LAYERS.map((layer) => {
           const isPeeled = layer.index < peeledCount
-          const isTop = topLayer ? layer.index === topLayer.index : false
+          const isTop    = topLayer ? layer.index === topLayer.index : false
           const animProg = isTop && peeling ? animProgressRef.current : 0
           return (
             <CylinderLayer
@@ -288,16 +345,14 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
               peeled={isPeeled}
               isTop={isTop}
               animProgress={animProg}
+              revealT={revealTs[layer.index] ?? 0}
             />
           )
         })}
 
         {/* Burst particles on peel */}
         {topLayer && (
-          <BurstParticles
-            color={topLayer.color}
-            active={peeling}
-          />
+          <BurstParticles color={topLayer.color} active={peeling} />
         )}
 
         {/* Labels for visible layers */}
@@ -311,15 +366,16 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
             <div
               style={{
                 pointerEvents: 'none',
-                background: 'rgba(5,5,8,0.8)',
-                border: `1px solid ${layer.color}50`,
+                background: 'rgba(5,5,8,0.88)',
+                border: `1px solid ${layer.color}55`,
                 borderRadius: 4,
-                padding: '2px 8px',
+                padding: '2px 9px',
                 color: layer.color,
                 fontSize: 9,
                 fontFamily: 'var(--font-jetbrains-mono)',
                 whiteSpace: 'nowrap',
-                boxShadow: `0 0 8px ${layer.color}30`,
+                boxShadow: `0 0 10px ${layer.color}35`,
+                opacity: revealTs[layer.index] ?? 0,
               }}
             >
               {layer.name}
@@ -333,15 +389,15 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
         enableZoom
         enableRotate
         minDistance={4}
-        maxDistance={12}
+        maxDistance={13}
         dampingFactor={0.08}
         enableDamping
       />
 
       <EffectComposer>
         <Bloom
-          intensity={1.5}
-          luminanceThreshold={0.15}
+          intensity={1.65}
+          luminanceThreshold={0.13}
           luminanceSmoothing={0.85}
           mipmapBlur
         />

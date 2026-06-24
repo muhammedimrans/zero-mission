@@ -205,7 +205,7 @@ export default function NetworkPage() {
       {/* ── Left: 3D Canvas (75%) ─────────────────────────────────────────── */}
       <div style={{ width: '75%', height: '100%', position: 'relative' }}>
         <Canvas
-          camera={{ position: [0, 0, 10], fov: 60, near: 0.1, far: 100 }}
+          camera={{ position: [0, 2, 12], fov: 52, near: 0.1, far: 120 }}
           style={{ background: COLORS.bg }}
           gl={{ antialias: true, alpha: false }}
           dpr={[1, 2]}
