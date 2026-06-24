@@ -51,6 +51,11 @@ export default function ArchitectureScene({ onHopChange }: ArchitectureSceneProp
   const hopRef = useRef(-1)
   const clockRef = useRef(0)
 
+  // Mount scale-in animation
+  const groupScaleRef = useRef(0.85)
+  const mountedRef    = useRef(false)
+  const sceneGroupRef = useRef<THREE.Group>(null)
+
   // Expose sendPacket via window for the button outside the canvas
   const sendPacket = useCallback(() => {
     if (animatingRef.current) return
@@ -70,6 +75,15 @@ export default function ArchitectureScene({ onHopChange }: ArchitectureSceneProp
   }, [sendPacket])
 
   useFrame((_, delta) => {
+    // Mount scale-in: ease from 0.85 → 1.0 over ~0.17s
+    if (!mountedRef.current) {
+      groupScaleRef.current = Math.min(1, groupScaleRef.current + delta * 0.9)
+      if (sceneGroupRef.current) {
+        sceneGroupRef.current.scale.setScalar(groupScaleRef.current)
+      }
+      if (groupScaleRef.current >= 1) mountedRef.current = true
+    }
+
     if (!animatingRef.current) return
 
     clockRef.current += delta * 0.8 // speed
@@ -103,12 +117,14 @@ export default function ArchitectureScene({ onHopChange }: ArchitectureSceneProp
       <SceneLights />
       <fog attach="fog" args={['#020b18', 15, 30]} />
 
-      <RouteChain
-        nodes={ROUTE_NODES}
-        packetProgress={progressRef.current}
-        activeHop={activeHop}
-        showLabels
-      />
+      <group ref={sceneGroupRef}>
+        <RouteChain
+          nodes={ROUTE_NODES}
+          packetProgress={progressRef.current}
+          activeHop={activeHop}
+          showLabels
+        />
+      </group>
 
       <OrbitControls
         enablePan={false}

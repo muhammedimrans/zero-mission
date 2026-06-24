@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
+import { useRef, useMemo, useCallback, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -9,6 +9,56 @@ import { useAppStore } from '@/lib/store'
 import { NetworkNode, NodeType } from '@/lib/types'
 import { COLORS } from '@/lib/constants'
 import { latLngToVector3 } from '@/lib/utils'
+import worldTopology from 'world-atlas/countries-110m.json'
+import { mesh } from 'topojson-client'
+import type { Topology } from 'topojson-specification'
+
+// Pre-computed at module level (runs once, not per render)
+function buildGeoLineSegments(
+  multiLine: { coordinates: number[][][] },
+  radius: number,
+): Float32Array {
+  const pts: number[] = []
+  multiLine.coordinates.forEach((ring) => {
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [lng1, lat1] = ring[i]
+      const [lng2, lat2] = ring[i + 1]
+      if (Math.abs(lng2 - lng1) > 90) continue // skip antimeridian wraps
+      // latLngToVector3 formula inline (avoids import cycle)
+      const toXYZ = (lat: number, lng: number) => {
+        const phi = (90 - lat) * (Math.PI / 180)
+        const theta = (lng + 180) * (Math.PI / 180)
+        return [
+          -(radius * Math.sin(phi) * Math.cos(theta)),
+          radius * Math.cos(phi),
+          radius * Math.sin(phi) * Math.sin(theta),
+        ]
+      }
+      const [x1, y1, z1] = toXYZ(lat1, lng1)
+      const [x2, y2, z2] = toXYZ(lat2, lng2)
+      pts.push(x1, y1, z1, x2, y2, z2)
+    }
+  })
+  return new Float32Array(pts)
+}
+
+const BORDER_RADIUS = 3.603 // just above globe surface
+
+// Land/coastline outlines
+const LAND_POSITIONS = buildGeoLineSegments(
+  mesh(worldTopology as unknown as Topology, (worldTopology as any).objects.land),
+  BORDER_RADIUS,
+)
+
+// Internal country borders (exclude coastlines - where a !== b)
+const COUNTRY_POSITIONS = buildGeoLineSegments(
+  mesh(
+    worldTopology as unknown as Topology,
+    (worldTopology as any).objects.countries,
+    (a: any, b: any) => a !== b,
+  ),
+  BORDER_RADIUS,
+)
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -146,6 +196,48 @@ function GlobeBase() {
           blending={THREE.AdditiveBlending}
         />
       </mesh>
+    </group>
+  )
+}
+
+// ── Globe country border lines ────────────────────────────────────────────────
+
+function GlobeCountryBorders() {
+  const landGeo = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(LAND_POSITIONS, 3))
+    return geo
+  }, [])
+
+  const borderGeo = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(COUNTRY_POSITIONS, 3))
+    return geo
+  }, [])
+
+  return (
+    <group>
+      {/* Coastlines — visible teal-gray */}
+      <lineSegments geometry={landGeo}>
+        <lineBasicMaterial
+          color="#3a6a8a"
+          transparent
+          opacity={0.55}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </lineSegments>
+
+      {/* Country borders — subtler */}
+      <lineSegments geometry={borderGeo}>
+        <lineBasicMaterial
+          color="#2a4560"
+          transparent
+          opacity={0.28}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </lineSegments>
     </group>
   )
 }
@@ -469,18 +561,6 @@ function GlobePacketDots({ nodes }: { nodes: NetworkNode[] }) {
   )
 }
 
-// ── Scene-level subtle drift controller ──────────────────────────────────────
-
-function SceneDrift({ orbitRef }: { orbitRef: React.RefObject<{ target: THREE.Vector3 } | null> }) {
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    if (orbitRef.current) {
-      orbitRef.current.target.y = Math.sin(t * 0.09) * 0.18
-    }
-  })
-  return null
-}
-
 // ── Main scene ────────────────────────────────────────────────────────────────
 
 export interface NetworkSceneProps {
@@ -493,8 +573,6 @@ export default function NetworkScene({ filter }: NetworkSceneProps) {
   const hoveredNode   = useAppStore((s) => s.hoveredNode)
   const setSelectedNode = useAppStore((s) => s.setSelectedNode)
   const setHoveredNode  = useAppStore((s) => s.setHoveredNode)
-
-  const orbitRef = useRef<{ target: THREE.Vector3 } | null>(null)
 
   const handleHover = useCallback(
     (id: string | null) => setHoveredNode(id),
@@ -524,9 +602,11 @@ export default function NetworkScene({ filter }: NetworkSceneProps) {
       <pointLight position={[-9, -5, -7]} intensity={1.8} color="#818cf8" distance={35} />
       <pointLight position={[0, 12, 2]}   intensity={1.0} color="#ffffff"  distance={30} />
       <pointLight position={[0, -10, 0]}  intensity={0.6} color="#6effc7"  distance={25} />
+      <directionalLight position={[8, 4, 6]} intensity={0.35} color="#7ab4ff" />
 
       {/* Globe */}
       <GlobeBase />
+      <GlobeCountryBorders />
 
       {/* Arc connections */}
       <GlobeArcs nodes={nodes} filter={filter} />
@@ -552,12 +632,8 @@ export default function NetworkScene({ filter }: NetworkSceneProps) {
         )
       })}
 
-      {/* Subtle axis drift */}
-      <SceneDrift orbitRef={orbitRef as React.RefObject<{ target: THREE.Vector3 } | null>} />
-
       {/* Orbit controls — auto-rotating globe */}
       <OrbitControls
-        ref={orbitRef as React.RefObject<any>}
         enablePan={false}
         enableZoom
         enableRotate

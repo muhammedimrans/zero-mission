@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -401,25 +401,22 @@ function NationStateScene() {
 
 // ── Fade overlay for attack transitions ──────────────────────────────────────
 
-function FadeOverlay({ fade }: { fade: number }) {
+function FadeOverlay({ matRef }: { matRef: React.RefObject<THREE.MeshBasicMaterial | null> }) {
   const meshRef = useRef<THREE.Mesh>(null)
   useFrame(({ camera }) => {
-    if (meshRef.current) {
-      // Position overlay just in front of camera
-      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
-      meshRef.current.position.copy(camera.position).addScaledVector(dir, 0.5)
-      meshRef.current.quaternion.copy(camera.quaternion)
-      ;(meshRef.current.material as THREE.MeshBasicMaterial).opacity = fade
-    }
+    if (!meshRef.current) return
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+    meshRef.current.position.copy(camera.position).addScaledVector(dir, 0.5)
+    meshRef.current.quaternion.copy(camera.quaternion)
   })
-  if (fade <= 0) return null
   return (
     <mesh ref={meshRef}>
       <planeGeometry args={[4, 4]} />
       <meshBasicMaterial
+        ref={matRef}
         color="#08090a"
         transparent
-        opacity={fade}
+        opacity={0}
         depthWrite={false}
       />
     </mesh>
@@ -429,10 +426,10 @@ function FadeOverlay({ fade }: { fade: number }) {
 // ── Main scene ────────────────────────────────────────────────────────────────
 
 export default function ThreatScene({ attack }: ThreatSceneProps) {
-  const groupRef  = useRef<THREE.Group>(null)
-  const [fade, setFade]   = useState(0)
-  const fadeRef   = useRef(0)
-  const prevAttack = useRef(attack)
+  const groupRef      = useRef<THREE.Group>(null)
+  const overlayMatRef = useRef<THREE.MeshBasicMaterial | null>(null)
+  const fadeRef       = useRef(0)
+  const prevAttack    = useRef(attack)
 
   useFrame(({ clock }, delta) => {
     if (groupRef.current) {
@@ -446,7 +443,9 @@ export default function ThreatScene({ attack }: ThreatSceneProps) {
     }
     if (fadeRef.current > 0) {
       fadeRef.current = Math.max(0, fadeRef.current - delta * 3)
-      setFade(fadeRef.current)
+      if (overlayMatRef.current) {
+        overlayMatRef.current.opacity = fadeRef.current
+      }
     }
   })
 
@@ -466,7 +465,7 @@ export default function ThreatScene({ attack }: ThreatSceneProps) {
         {attack === 'nation'  && <NationStateScene />}
       </group>
 
-      <FadeOverlay fade={fade} />
+      <FadeOverlay matRef={overlayMatRef} />
 
       <EffectComposer>
         <Bloom

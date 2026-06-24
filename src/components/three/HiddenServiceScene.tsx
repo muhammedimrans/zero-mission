@@ -161,6 +161,8 @@ function DHTRing({
   count: number
   color: string
 }) {
+  const nodeRefs = useRef<(THREE.Mesh | null)[]>([])
+
   const nodes = useMemo(() => {
     return Array.from({ length: count }, (_, i) => {
       const angle = (i / count) * Math.PI * 2
@@ -171,9 +173,24 @@ function DHTRing({
           center[2] + Math.sin(angle) * radius,
         ] as [number, number, number],
         label: `DHT-${i + 1}`,
+        angle,
       }
     })
   }, [center, radius, count])
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    nodeRefs.current.forEach((mesh, i) => {
+      if (!mesh) return
+      // Wave propagates around ring with period ~2s
+      const phase = (i / count) * Math.PI * 2
+      const wave = 0.5 + Math.sin(t * 1.8 - phase) * 0.5
+      const mat = mesh.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.4 + wave * 1.2
+      const s = 1 + wave * 0.22
+      mesh.scale.setScalar(s)
+    })
+  })
 
   const ringLine = useMemo(() => {
     const pts: number[] = []
@@ -201,7 +218,49 @@ function DHTRing({
     <group>
       <primitive object={ringLine} />
       {nodes.map((n, i) => (
-        <NodeSphere key={i} position={n.pos} color={color} label={n.label} size={0.1} />
+        <group key={i} position={n.pos}>
+          <mesh
+            ref={(el) => { nodeRefs.current[i] = el }}
+          >
+            <sphereGeometry args={[0.1, 20, 20]} />
+            <meshStandardMaterial
+              color={color}
+              emissive={color}
+              emissiveIntensity={0.7}
+              roughness={0.2}
+              metalness={0.4}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[0.1 * 2.2, 12, 12]} />
+            <meshBasicMaterial
+              color={color}
+              transparent
+              opacity={0.12}
+              side={THREE.BackSide}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+          <Html distanceFactor={10} center position={[0, 0.1 * 2.5, 0]}>
+            <div
+              style={{
+                pointerEvents: 'none',
+                background: 'rgba(5,5,8,0.85)',
+                border: `1px solid ${color}50`,
+                borderRadius: 4,
+                padding: '2px 7px',
+                color,
+                fontSize: 9,
+                fontFamily: 'var(--font-jetbrains-mono)',
+                whiteSpace: 'nowrap',
+                boxShadow: `0 0 8px ${color}30`,
+              }}
+            >
+              {n.label}
+            </div>
+          </Html>
+        </group>
       ))}
     </group>
   )

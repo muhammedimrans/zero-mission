@@ -432,7 +432,7 @@ export default function SphinxPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 px-6"
         >
           <div className="label-caps text-[10px] text-primary mb-3">
@@ -506,6 +506,7 @@ export default function SphinxPage() {
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="relative rounded-2xl overflow-hidden"
               style={{
                 height: 520,
@@ -538,6 +539,7 @@ export default function SphinxPage() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               style={{ minHeight: 520 }}
             >
               <LayerInspector

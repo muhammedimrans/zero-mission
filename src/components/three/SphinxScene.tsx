@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo, useCallback, useEffect, useState } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -186,13 +186,15 @@ interface CylinderLayerProps {
   revealT:      number
 }
 
-function CylinderLayer({ layer, peeled, isTop, animProgress, revealT }: CylinderLayerProps) {
+function CylinderLayer({ layer, peeled, isTop, animProgress }: CylinderLayerProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
 
   useFrame(() => {
     if (!meshRef.current || !glowRef.current) return
 
+    // Read live reveal value from module-level array (updated by SphinxScene.useFrame)
+    const revealT = _revealTs[layer.index] ?? 0
     // Staggered reveal on mount (revealT: 0→1)
     const revealScale = 0.6 + revealT * 0.4
     const revealOpacity = revealT
@@ -279,14 +281,18 @@ function CylinderLayer({ layer, peeled, isTop, animProgress, revealT }: Cylinder
 
 const REVEAL_STAGGER = 0.22  // seconds between layer reveals
 
+// Module-level mutable array so CylinderLayer.useFrame can read live values
+// without requiring a React re-render per frame.
+const _revealTs: number[] = LAYERS.map(() => 0)
+
 export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: SphinxSceneProps) {
   const groupRef      = useRef<THREE.Group>(null)
   const animProgressRef = useRef(0)
   const peelingRef    = useRef(false)
   const lastPeelRef   = useRef(-1)
 
-  // Per-layer reveal progress (0→1), driven by mount time
-  const [revealTs, setRevealTs] = useState<number[]>(LAYERS.map(() => 0))
+  // Per-layer reveal progress (0→1), driven by mount time — writes to _revealTs (module-level)
+  // to avoid re-renders per frame while keeping CylinderLayer.useFrame reading live values.
   const revealStartRef = useRef<number | null>(null)
 
   peelingRef.current = peeling
@@ -307,16 +313,14 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
       }
     }
 
-    // Layer reveal animation on mount
+    // Layer reveal animation on mount — mutate module-level array, no React re-render
     if (revealStartRef.current === null) {
       revealStartRef.current = clock.getElapsedTime()
     }
     const elapsed = clock.getElapsedTime() - revealStartRef.current
-    setRevealTs(
-      LAYERS.map((l) =>
-        Math.min(1, Math.max(0, (elapsed - l.index * REVEAL_STAGGER) / 0.45)),
-      ),
-    )
+    LAYERS.forEach((l) => {
+      _revealTs[l.index] = Math.min(1, Math.max(0, (elapsed - l.index * REVEAL_STAGGER) / 0.45))
+    })
   })
 
   const visibleLayers = LAYERS.slice(peeledCount)
@@ -345,7 +349,7 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
               peeled={isPeeled}
               isTop={isTop}
               animProgress={animProg}
-              revealT={revealTs[layer.index] ?? 0}
+              revealT={0}
             />
           )
         })}
@@ -375,7 +379,7 @@ export default function SphinxScene({ peeledCount, peeling, onPeelComplete }: Sp
                 fontFamily: 'var(--font-jetbrains-mono)',
                 whiteSpace: 'nowrap',
                 boxShadow: `0 0 10px ${layer.color}35`,
-                opacity: revealTs[layer.index] ?? 0,
+                opacity: _revealTs[layer.index] ?? 0,
               }}
             >
               {layer.name}

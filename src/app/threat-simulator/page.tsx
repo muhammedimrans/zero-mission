@@ -374,7 +374,7 @@ export default function ThreatSimulatorPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 px-6"
         >
           <div className="label-caps text-[10px] text-primary mb-3">Threat Simulator</div>
@@ -426,71 +426,74 @@ export default function ThreatSimulatorPage() {
 
             {/* Left: 3D Network Scene */}
             <div className="lg:col-span-2">
-              <AnimatePresence mode="wait">
+              {/* Canvas is stable — never remounted. ThreatScene's internal FadeOverlay handles scene transitions. */}
+              <motion.div
+                className="relative rounded-2xl overflow-hidden"
+                animate={{
+                  borderColor: `${attack.color}20`,
+                  boxShadow: `0 0 40px ${attack.color}08`,
+                }}
+                transition={{ duration: 0.4 }}
+                style={{
+                  height: 480,
+                  background: 'rgba(5,5,8,0.9)',
+                  border: `1px solid ${attack.color}20`,
+                }}
+              >
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-muted)' }}>
+                      Loading simulation...
+                    </div>
+                  }
+                >
+                  <Canvas
+                    camera={{ position: [0, 2.5, 9], fov: 52 }}
+                    style={{ background: 'transparent' }}
+                    gl={{ antialias: true, alpha: true }}
+                  >
+                    <ThreatScene attack={activeAttack} />
+                    <OrbitControls
+                      enablePan={false}
+                      enableZoom={false}
+                      enableRotate
+                      dampingFactor={0.06}
+                      enableDamping
+                    />
+                  </Canvas>
+                </Suspense>
+
+                {/* Attack overlay label */}
                 <motion.div
-                  key={activeAttack}
-                  initial={{ opacity: 0, scale: 0.97 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.97 }}
-                  transition={{ duration: 0.35 }}
-                  className="relative rounded-2xl overflow-hidden"
+                  className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
+                  animate={{
+                    backgroundColor: `${attack.color}15`,
+                    borderColor: `${attack.color}40`,
+                    color: attack.color,
+                  }}
+                  transition={{ duration: 0.4 }}
                   style={{
-                    height: 480,
-                    background: 'rgba(5,5,8,0.9)',
-                    border: `1px solid ${attack.color}20`,
-                    boxShadow: `0 0 40px ${attack.color}08`,
+                    border: '1px solid',
+                    fontFamily: 'var(--font-jetbrains-mono)',
                   }}
                 >
-                  <Suspense
-                    fallback={
-                      <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-muted)' }}>
-                        Loading simulation...
-                      </div>
-                    }
-                  >
-                    <Canvas
-                      camera={{ position: [0, 2.5, 9], fov: 52 }}
-                      style={{ background: 'transparent' }}
-                      gl={{ antialias: true, alpha: true }}
-                    >
-                      <ThreatScene attack={activeAttack} />
-                      <OrbitControls
-                        enablePan={false}
-                        enableZoom={false}
-                        enableRotate
-                        dampingFactor={0.06}
-                        enableDamping
-                      />
-                    </Canvas>
-                  </Suspense>
-
-                  {/* Attack overlay label */}
-                  <div
-                    className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
-                    style={{
-                      background: `${attack.color}15`,
-                      border: `1px solid ${attack.color}40`,
-                      color: attack.color,
-                      fontFamily: 'var(--font-jetbrains-mono)',
-                    }}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: attack.color, boxShadow: `0 0 6px ${attack.color}` }}
-                    />
-                    LIVE SIMULATION
-                  </div>
-
-                  {/* Verdict overlay */}
-                  <div className="absolute bottom-3 right-3">
-                    <VerdictBadge
-                      verdict={attack.verdict}
-                      color={attack.verdictColor}
-                      symbol={attack.verdictSymbol}
-                    />
-                  </div>
+                  <motion.span
+                    className="w-1.5 h-1.5 rounded-full"
+                    animate={{ backgroundColor: attack.color, boxShadow: `0 0 6px ${attack.color}` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                  LIVE SIMULATION
                 </motion.div>
-              </AnimatePresence>
+
+                {/* Verdict overlay */}
+                <div className="absolute bottom-3 right-3">
+                  <VerdictBadge
+                    verdict={attack.verdict}
+                    color={attack.verdictColor}
+                    symbol={attack.verdictSymbol}
+                  />
+                </div>
+              </motion.div>
 
               {/* Mitigation timeline */}
               <div className="mt-4">

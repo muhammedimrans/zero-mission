@@ -149,7 +149,7 @@ function ConnectionWebBg() {
     resize()
     window.addEventListener('resize', resize)
 
-    const NODES = 40
+    const NODES = 28
     const nodes = Array.from({ length: NODES }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -393,7 +393,7 @@ export default function HiddenServicesPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 px-6"
         >
           <div className="label-caps text-[10px] text-primary mb-3">Hidden Services</div>
