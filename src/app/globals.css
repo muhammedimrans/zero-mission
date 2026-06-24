@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/* ── Design-system tokens ─────────────────────────────────────── */
+:root {
+  --bg:              #050508;
+  --bg-secondary:    #0a0a14;
+  --neon-blue:       #00d4ff;
+  --neon-blue-glow:  #00d4ff40;
+  --purple:          #7c3aed;
+  --purple-glow:     #7c3aed40;
+  --green:           #00ff88;
+  --red:             #ff3366;
+  --white:           #f0f4ff;
+  --muted:           #4a5568;
+  --border:          rgba(0, 212, 255, 0.1);
+}
+
+/* ── Tailwind v4 theme extension ──────────────────────────────── */
+@theme inline {
+  --color-bg:           var(--bg);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-neon-blue:    var(--neon-blue);
+  --color-purple:       var(--purple);
+  --color-green:        var(--green);
+  --color-red:          var(--red);
+  --color-white-custom: var(--white);
+  --color-muted:        var(--muted);
+
+  --font-space-grotesk:  var(--font-space-grotesk);
+  --font-jetbrains-mono: var(--font-jetbrains-mono);
+}
+
+/* ── Base reset ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.45);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.25) var(--bg-secondary);
+}
+
+/* ── Selection ────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 212, 255, 0.25);
+  color: var(--white);
+}
+
+::-moz-selection {
+  background: rgba(0, 212, 255, 0.25);
+  color: var(--white);
+}
+
+/* ── Focus visible ────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--neon-blue);
+  outline-offset: 2px;
+}
+
+/* ── Utilities ────────────────────────────────────────────────── */
+.font-mono-code {
+  font-family: var(--font-jetbrains-mono), 'Courier New', monospace;
+}
+
+.glow-blue {
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+}
+
+.glow-purple {
+  text-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+}
+
+.glass {
+  background: rgba(10, 10, 20, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
