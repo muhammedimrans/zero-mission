@@ -173,7 +173,7 @@ function ConnectionWebBg() {
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist < 120) {
             const alpha = (1 - dist / 120) * 0.08
-            ctx.strokeStyle = `rgba(124,58,237,${alpha})`
+            ctx.strokeStyle = `rgba(129,140,248,${alpha})`
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(nodes[i].x, nodes[i].y)
@@ -185,7 +185,7 @@ function ConnectionWebBg() {
       nodes.forEach((n) => {
         ctx.beginPath()
         ctx.arc(n.x, n.y, 2, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(124,58,237,0.25)'
+        ctx.fillStyle = 'rgba(129,140,248,0.25)'
         ctx.fill()
       })
       animId = requestAnimationFrame(draw)
@@ -258,12 +258,11 @@ function StepSection({ stepData, index, activeStep, onBecomeActive }: StepSectio
             {stepData.subtitle}
           </p>
           <h2
-            className="text-3xl sm:text-4xl font-bold mb-4"
-            style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}
+            className="font-display text-3xl md:text-4xl font-semibold text-text-primary mb-4"
           >
             {stepData.title}
           </h2>
-          <p className="text-sm leading-loose mb-6" style={{ color: COLORS.muted }}>
+          <p className="text-sm leading-loose mb-6" style={{ color: 'var(--text-muted)' }}>
             {stepData.description}
           </p>
 
@@ -305,7 +304,7 @@ function StepSection({ stepData, index, activeStep, onBecomeActive }: StepSectio
           >
             <Suspense
               fallback={
-                <div className="flex h-full items-center justify-center" style={{ color: COLORS.muted }}>
+                <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-muted)' }}>
                   Loading scene...
                 </div>
               }
@@ -358,7 +357,7 @@ function StepProgress({ activeStep }: { activeStep: HiddenServiceStep }) {
           key={s.step}
           className="w-2 h-2 rounded-full transition-all duration-300"
           style={{
-            background: activeStep === s.step ? s.color : `${COLORS.muted}50`,
+            background: activeStep === s.step ? s.color : 'rgba(107,114,128,0.3)',
             boxShadow: activeStep === s.step ? `0 0 8px ${s.color}` : 'none',
             transform: activeStep === s.step ? 'scale(1.5)' : 'scale(1)',
           }}
@@ -374,7 +373,7 @@ export default function HiddenServicesPage() {
   const [activeStep, setActiveStep] = useState<HiddenServiceStep>(1)
 
   return (
-    <main style={{ background: COLORS.bg }}>
+    <main>
 
       {/* Progress indicator */}
       <StepProgress activeStep={activeStep} />
@@ -382,7 +381,7 @@ export default function HiddenServicesPage() {
       {/* ── Hero ── */}
       <section
         className="relative flex flex-col items-center justify-center text-center overflow-hidden"
-        style={{ minHeight: '100vh', paddingTop: 80 }}
+        style={{ minHeight: '100vh' }}
       >
         <ConnectionWebBg />
         <div
@@ -397,16 +396,10 @@ export default function HiddenServicesPage() {
           transition={{ duration: 0.9 }}
           className="relative z-10 px-6"
         >
-          <p
-            className="text-xs uppercase tracking-widest mb-4"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}
-          >
-            Module &#xB7; 04
-          </p>
+          <div className="label-caps text-[10px] text-primary mb-3">Hidden Services</div>
           <h1
-            className="text-5xl sm:text-7xl font-bold mb-6"
+            className="font-display text-[44px] md:text-[72px] font-semibold leading-[1.05] tracking-tight mb-6"
             style={{
-              fontFamily: 'var(--font-space-grotesk)',
               background: `linear-gradient(135deg, ${COLORS.green}, ${COLORS.neonBlue})`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -418,7 +411,7 @@ export default function HiddenServicesPage() {
           </h1>
           <p
             className="text-base sm:text-lg max-w-2xl mx-auto mb-8"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-space-grotesk)', lineHeight: 1.8 }}
+            style={{ color: 'var(--text-muted)', lineHeight: 1.8 }}
           >
             Onion-routed service endpoints where both client and server remain
             anonymous. No IP addresses are exchanged — ever.
@@ -439,10 +432,10 @@ export default function HiddenServicesPage() {
                   border: '1px solid rgba(255,255,255,0.08)',
                 }}
               >
-                <span className="text-xl font-bold" style={{ color: COLORS.green, fontFamily: 'var(--font-space-grotesk)' }}>
+                <span className="text-xl font-bold" style={{ color: COLORS.green }}>
                   {stat.label}
                 </span>
-                <span className="text-xs mt-1" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+                <span className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                   {stat.desc}
                 </span>
               </div>
@@ -454,7 +447,7 @@ export default function HiddenServicesPage() {
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <span className="text-xs" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+            <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
               scroll to walk through
             </span>
             <div className="w-px h-8" style={{ background: `linear-gradient(to bottom, ${COLORS.green}60, transparent)` }} />
@@ -475,8 +468,7 @@ export default function HiddenServicesPage() {
 
       {/* ── Properties Grid ── */}
       <section
-        className="relative py-24"
-        style={{ background: COLORS.bgSecondary }}
+        className="relative py-24 border-t border-border bg-surface-low/30"
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -491,13 +483,11 @@ export default function HiddenServicesPage() {
             viewport={{ once: true }}
             className="text-center mb-14"
           >
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.green, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}>
-              Guarantees
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}>
+            <div className="label-caps text-[10px] text-primary mb-3">Security Guarantees</div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
               Privacy Properties
             </h2>
-            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: COLORS.muted }}>
+            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: 'var(--text-muted)' }}>
               Zero Protocol hidden services provide mathematically provable privacy guarantees for both parties.
             </p>
           </motion.div>
@@ -523,12 +513,11 @@ export default function HiddenServicesPage() {
                     {prop.icon}
                   </div>
                   <h3
-                    className="text-base font-bold mb-2"
-                    style={{ color: COLORS.white, fontFamily: 'var(--font-space-grotesk)' }}
+                    className="text-base font-semibold mb-2 text-text-primary"
                   >
                     {prop.title}
                   </h3>
-                  <p className="text-xs leading-relaxed" style={{ color: COLORS.muted }}>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     {prop.description}
                   </p>
                 </GlassPanel>

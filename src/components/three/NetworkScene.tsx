@@ -324,12 +324,12 @@ export default function NetworkScene({ filter }: NetworkSceneProps) {
     <>
       {/* Lighting */}
       <ambientLight intensity={0.25} color="#1a1a2e" />
-      <pointLight position={[5, 5, 5]} intensity={2} color="#00d4ff" distance={25} />
-      <pointLight position={[-5, -3, -3]} intensity={1.2} color="#7c3aed" distance={20} />
+      <pointLight position={[5, 5, 5]} intensity={2} color="#38bdf8" distance={25} />
+      <pointLight position={[-5, -3, -3]} intensity={1.2} color="#818cf8" distance={20} />
       <pointLight position={[0, 8, 2]} intensity={0.6} color="#ffffff" distance={18} />
 
       {/* Fog */}
-      <fog attach="fog" args={['#050508', 18, 35]} />
+      <fog attach="fog" args={['#020b18', 18, 35]} />
 
       {/* Connection lines */}
       <ConnectionLines nodes={nodes} posMap={posMap} filter={filter} />

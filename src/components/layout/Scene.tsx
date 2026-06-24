@@ -26,8 +26,8 @@ export default function Scene({
       >
         <Suspense fallback={null}>
           <ambientLight intensity={0.15} />
-          <pointLight position={[10, 10, 10]} intensity={0.5} color="#00d4ff" />
-          <pointLight position={[-10, -10, -10]} intensity={0.3} color="#7c3aed" />
+          <pointLight position={[10, 10, 10]} intensity={0.5} color="#38bdf8" />
+          <pointLight position={[-10, -10, -10]} intensity={0.3} color="#818cf8" />
           {children}
           {controls && (
             <OrbitControls

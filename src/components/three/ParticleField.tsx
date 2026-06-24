@@ -17,8 +17,8 @@ export default function ParticleField() {
     const sz = new Float32Array(PARTICLE_COUNT)
     const vel = new Float32Array(PARTICLE_COUNT * 3)
 
-    const neonBlue = new THREE.Color('#00d4ff')
-    const purple = new THREE.Color('#7c3aed')
+    const neonBlue = new THREE.Color('#38bdf8')
+    const purple = new THREE.Color('#818cf8')
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Random point in sphere

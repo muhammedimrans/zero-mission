@@ -1,117 +1,382 @@
 @import "tailwindcss";
 
-/* ── Design-system tokens ─────────────────────────────────────── */
-:root {
-  --bg:              #050508;
-  --bg-secondary:    #0a0a14;
-  --neon-blue:       #00d4ff;
-  --neon-blue-glow:  #00d4ff40;
-  --purple:          #7c3aed;
-  --purple-glow:     #7c3aed40;
-  --green:           #00ff88;
-  --red:             #ff3366;
-  --white:           #f0f4ff;
-  --muted:           #4a5568;
-  --border:          rgba(0, 212, 255, 0.1);
-}
+/* ============================================================
+ * Zero Protocol — Design System (migrated from 0protocol.net)
+ * Exact tokens from /home/zero/zero_website/zero/zero_website/src/styles.css
+ * ============================================================ */
 
-/* ── Tailwind v4 theme extension ──────────────────────────────── */
 @theme inline {
-  --color-bg:           var(--bg);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-neon-blue:    var(--neon-blue);
-  --color-purple:       var(--purple);
-  --color-green:        var(--green);
-  --color-red:          var(--red);
-  --color-white-custom: var(--white);
-  --color-muted:        var(--muted);
+  /* Color palette — exact from styles.css lines 16–43 */
+  --color-background:       var(--background);
+  --color-foreground:       var(--foreground);
+  --color-surface:          var(--surface);
+  --color-surface-low:      var(--surface-low);
+  --color-surface-high:     var(--surface-high);
+  --color-card:             var(--card);
+  --color-card-foreground:  var(--card-foreground);
+  --color-primary:          var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dim:      var(--primary-dim);
+  --color-secondary:        var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:            var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent:           var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive:      var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning:          var(--warning);
+  --color-border:           var(--border);
+  --color-border-strong:    var(--border-strong);
+  --color-input:            var(--input);
+  --color-ring:             var(--ring);
+  --color-text-primary:     var(--text-primary);
+  --color-text-secondary:   var(--text-secondary);
+  --color-text-muted:       var(--text-muted);
 
-  --font-space-grotesk:  var(--font-space-grotesk);
-  --font-jetbrains-mono: var(--font-jetbrains-mono);
+  /* Node-type colors (semantic, zero-mission visualization only) */
+  --color-guard:   var(--node-guard);
+  --color-mix:     var(--node-mix);
+  --color-exit:    var(--node-exit);
+  --color-warn:    var(--node-warn);
+  --color-danger:  var(--node-danger);
+
+  /* Typography — exact from styles.css lines 45–47 */
+  --font-display: var(--font-geist), "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+
+  /* Radius scale — exact from styles.css lines 49–53 */
+  --radius-sm:  2px;
+  --radius-md:  4px;
+  --radius-lg:  8px;
+  --radius-xl:  12px;
+  --radius-2xl: 16px;
+
+  /* Shadow/glow — exact from styles.css lines 55–56 */
+  --shadow-glow:      0 0 24px rgba(0, 229, 168, 0.18);
+  --shadow-glow-soft: 0 0 60px rgba(0, 229, 168, 0.08);
 }
 
-/* ── Base reset ───────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* ── CSS custom properties — exact from styles.css lines 59–99 ─── */
+:root,
+.dark {
+  /* Backgrounds — neutral near-black, no blue tint */
+  --background:   #08090a;
+  --foreground:   #e3e2e3;
+  --surface:      #0d0e0f;
+  --surface-low:  #121315;
+  --surface-high: #1b1c1d;
+
+  --card:            #0f1216;
+  --card-foreground: #e3e2e3;
+
+  /* Brand — neon mint primary */
+  --primary:            #6effc7;
+  --primary-foreground: #003827;
+  --primary-dim:        #00e5a8;
+
+  --secondary:            #afc6ff;
+  --secondary-foreground: #001a43;
+
+  --accent:            #00e5a8;
+  --accent-foreground: #002115;
+
+  --muted:            #1b1c1d;
+  --muted-foreground: #9aa4af;
+
+  --destructive:            #ff6b6b;
+  --destructive-foreground: #ffdad6;
+  --warning: #ffbe55;
+
+  /* Borders — neutral gray, no color tint */
+  --border:        rgba(139, 148, 158, 0.18);
+  --border-strong: rgba(139, 148, 158, 0.32);
+  --input:         rgba(139, 148, 158, 0.24);
+  --ring:          rgba(110, 255, 199, 0.55);
+
+  /* Text */
+  --text-primary:   #ffffff;
+  --text-secondary: #c9d1d9;
+  --text-muted:     #9aa4af;
+
+  /* Node-type colors (for network visualization semantic coding) */
+  --node-guard:  #38bdf8;
+  --node-mix:    #818cf8;
+  --node-exit:   #34d399;
+  --node-warn:   #fbbf24;
+  --node-danger: #f87171;
+
+  /* Glow shortcuts for node types */
+  --glow-guard: 0 0 24px rgba(56,189,248,0.18);
+  --glow-mix:   0 0 24px rgba(129,140,248,0.18);
+  --glow-exit:  0 0 20px rgba(52,211,153,0.18);
 }
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+/* ── Base styles — exact from styles.css lines 101–128 ─────────── */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    color-scheme: dark;
+    background: var(--background);
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
-body {
-  background: var(--bg);
-  color: var(--white);
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
+/* ============================================================
+ * Utilities — exact from styles.css lines 134–165
+ * ============================================================ */
 
-/* ── Scrollbar ────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.25);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 212, 255, 0.45);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 212, 255, 0.25) var(--bg-secondary);
-}
-
-/* ── Selection ────────────────────────────────────────────────── */
-::selection {
-  background: rgba(0, 212, 255, 0.25);
-  color: var(--white);
-}
-
-::-moz-selection {
-  background: rgba(0, 212, 255, 0.25);
-  color: var(--white);
-}
-
-/* ── Focus visible ────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--neon-blue);
-  outline-offset: 2px;
-}
-
-/* ── Utilities ────────────────────────────────────────────────── */
-.font-mono-code {
-  font-family: var(--font-jetbrains-mono), 'Courier New', monospace;
-}
-
-.glow-blue {
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
-}
-
-.glow-purple {
-  text-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
-}
-
-.glass {
-  background: rgba(10, 10, 20, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+@utility glass-panel {
+  background: rgba(15, 18, 22, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
-  border-radius: 1rem;
 }
+
+@utility bento-card {
+  background: linear-gradient(180deg, rgba(15, 18, 22, 0.92) 0%, rgba(15, 18, 22, 0.5) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  position: relative;
+}
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(rgba(139, 148, 158, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 148, 158, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility radial-mint {
+  background: radial-gradient(ellipse at center, rgba(0, 229, 168, 0.08) 0%, transparent 60%);
+}
+
+@utility label-caps {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ============================================================
+ * Animations — exact from styles.css lines 171–185
+ * ============================================================ */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(110, 255, 199, 0.6); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(110, 255, 199, 0); }
+}
+@keyframes dash {
+  to { stroke-dashoffset: -200; }
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-pulse-dot { animation: pulse-dot 2s ease-out infinite; }
+.animate-dash      { stroke-dasharray: 6 8; animation: dash 4s linear infinite; }
+.animate-float-y   { animation: float-y 4s ease-in-out infinite; }
+
+/* Backwards-compat alias used in existing components */
+.pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse-dot 2s ease-out infinite;
+}
+
+.hairline { border-top: 1px solid var(--border); }
+
+/* ── Scrollbar — exact from styles.css lines 189–192 ──────────── */
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(110, 255, 199, 0.3); }
+
+/* ── Selection ─────────────────────────────────────────────────── */
+::selection      { background: rgba(110, 255, 199, 0.2); color: var(--text-primary); }
+::-moz-selection { background: rgba(110, 255, 199, 0.2); color: var(--text-primary); }
+
+/* ── Reduced motion — exact from styles.css lines 195–204 ─────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+ * Legacy component classes
+ * Updated to use Zero Protocol design tokens.
+ * These classes are referenced by existing zero-mission components.
+ * ============================================================ */
+
+/* Card — updated to bento-card values */
+.card {
+  background: linear-gradient(180deg, rgba(15, 18, 22, 0.92) 0%, rgba(15, 18, 22, 0.5) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: rgba(110, 255, 199, 0.3);
+  box-shadow: var(--shadow-glow-soft);
+}
+
+/* Glass — updated to glass-panel values */
+.glass {
+  background: rgba(15, 18, 22, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* Progress bar */
+.progress-bar  { background: rgba(110,255,199,0.08); border-radius: 100px; height: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dim)); border-radius: 100px; transition: width 1.2s ease; }
+
+/* Badge / pill — node-type semantic badges (not brand) */
+.badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+.badge-guard  { background: rgba(56,189,248,0.12);  color: var(--node-guard); }
+.badge-mix    { background: rgba(129,140,248,0.12); color: var(--node-mix); }
+.badge-exit   { background: rgba(52,211,153,0.12);  color: var(--node-exit); }
+.badge-online { background: rgba(52,211,153,0.10);  color: var(--node-exit); }
+.risk-critical { background: rgba(248,113,113,0.15); color: var(--node-danger); }
+.risk-high     { background: rgba(251,191,36,0.15);  color: var(--node-warn); }
+.risk-medium   { background: rgba(110,255,199,0.10); color: var(--primary); }
+.risk-low      { background: rgba(52,211,153,0.15);  color: var(--node-exit); }
+
+/* Terminal widget */
+.terminal {
+  background: #010b17;
+  border: 1px solid rgba(110,255,199,0.15);
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  min-height: 320px;
+  overflow: hidden;
+  position: relative;
+}
+.terminal::before {
+  content: '● ● ●';
+  position: absolute;
+  top: 0.75rem;
+  left: 1rem;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.3em;
+}
+.term-ok   { color: var(--node-exit); }
+.term-warn { color: var(--node-warn); }
+.term-info { color: var(--primary); }
+.term-dim  { color: var(--text-muted); }
+
+/* Inline code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  background: rgba(110,255,199,0.08);
+  padding: 0.1em 0.38em;
+  border-radius: 4px;
+  color: var(--primary);
+}
+
+/* Button system — updated to Zero Website values */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 0 24px rgba(110, 255, 199, 0.2);
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 32px rgba(110, 255, 199, 0.35);
+}
+.btn-ghost {
+  background: rgba(15, 18, 22, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  border-color: rgba(110, 255, 199, 0.4);
+  color: var(--primary);
+}
+
+/* Gradient text utilities — updated to Zero Website colors */
+.gradient-title {
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-hero {
+  background: linear-gradient(to right, var(--primary), var(--primary-dim), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-logo {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Text glow utilities — updated to mint */
+.glow-primary { text-shadow: 0 0 20px rgba(110, 255, 199, 0.5); }
+/* Keep legacy node-type glows for network visualization */
+.glow-blue   { text-shadow: 0 0 20px rgba(56,189,248,0.6); }
+.glow-purple { text-shadow: 0 0 20px rgba(129,140,248,0.6); }
+.glow-green  { text-shadow: 0 0 20px rgba(52,211,153,0.5); }
+
+/* Section layout helpers */
+.sec-title { font-family: var(--font-display); font-size: 2.4rem; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+.sec-sub   { color: var(--text-secondary); margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; max-width: 680px; }

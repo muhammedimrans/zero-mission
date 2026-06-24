@@ -38,7 +38,7 @@ export default function Globe({ radius = 1, wireframe = false }: GlobeProps) {
       {/* Grid overlay */}
       <Sphere args={[radius + 0.001, 36, 36]}>
         <meshBasicMaterial
-          color="#00d4ff"
+          color="#38bdf8"
           wireframe
           transparent
           opacity={0.04}
@@ -47,8 +47,8 @@ export default function Globe({ radius = 1, wireframe = false }: GlobeProps) {
       </Sphere>
 
       {/* Atmospheric glow */}
-      <AtmosphericGlow radius={radius * 1.08} color="#00d4ff" opacity={0.1} />
-      <AtmosphericGlow radius={radius * 1.15} color="#7c3aed" opacity={0.05} />
+      <AtmosphericGlow radius={radius * 1.08} color="#38bdf8" opacity={0.1} />
+      <AtmosphericGlow radius={radius * 1.15} color="#818cf8" opacity={0.05} />
     </group>
   )
 }

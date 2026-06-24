@@ -341,7 +341,7 @@ export default function ThreatScene({ attack }: ThreatSceneProps) {
       <pointLight position={[3, 5, 5]} intensity={2} color={COLORS.neonBlue} distance={20} />
       <pointLight position={[-5, -3, -3]} intensity={1.5} color={RED} distance={15} />
       <pointLight position={[0, 6, 2]} intensity={0.8} color="#ffffff" distance={12} />
-      <fog attach="fog" args={['#050508', 15, 30]} />
+      <fog attach="fog" args={['#020b18', 15, 30]} />
 
       <group ref={groupRef}>
         {attack === 'isp' && <ISPMonitoringScene />}

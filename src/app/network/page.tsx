@@ -35,7 +35,7 @@ function FilterBtn({ label, value, active, color, onClick }: FilterBtnProps) {
       style={{
         background: active ? `${color}22` : 'rgba(5,5,8,0.7)',
         border: `1px solid ${active ? color : 'rgba(255,255,255,0.1)'}`,
-        color: active ? color : '#6b7280',
+        color: active ? color : 'var(--text-muted)',
         fontFamily: 'var(--font-jetbrains-mono)',
         fontSize: 11,
         padding: '4px 12px',
@@ -65,7 +65,7 @@ function ReputationBar({ value }: { value: number }) {
           marginBottom: 4,
           fontSize: 11,
           fontFamily: 'var(--font-jetbrains-mono)',
-          color: '#6b7280',
+          color: 'var(--text-muted)',
         }}
       >
         <span>Reputation</span>
@@ -120,7 +120,7 @@ function StatChip({
           color,
           fontSize: 20,
           fontWeight: 700,
-          fontFamily: 'var(--font-space-grotesk)',
+          fontFamily: 'var(--font-display)',
           lineHeight: 1,
         }}
       >
@@ -128,7 +128,7 @@ function StatChip({
       </div>
       <div
         style={{
-          color: '#6b7280',
+          color: 'var(--text-muted)',
           fontSize: 9,
           fontFamily: 'var(--font-jetbrains-mono)',
           marginTop: 3,
@@ -159,7 +159,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       />
       <span
         style={{
-          color: '#9ca3af',
+          color: 'var(--text-muted)',
           fontSize: 12,
           fontFamily: 'var(--font-jetbrains-mono)',
         }}
@@ -197,7 +197,6 @@ export default function NetworkPage() {
       style={{
         width: '100vw',
         height: '100vh',
-        background: COLORS.bg,
         display: 'flex',
         position: 'relative',
         overflow: 'hidden',
@@ -245,7 +244,7 @@ export default function NetworkPage() {
             position: 'absolute',
             bottom: 20,
             left: 20,
-            color: '#374151',
+            color: 'var(--text-muted)',
             fontSize: 10,
             fontFamily: 'var(--font-jetbrains-mono)',
             letterSpacing: '0.05em',
@@ -263,42 +262,32 @@ export default function NetworkPage() {
           top: 0,
           height: '100vh',
           width: '25%',
-          background: 'rgba(5,5,8,0.92)',
-          borderLeft: '1px solid rgba(0,212,255,0.1)',
+          background: 'rgba(8,9,10,0.92)',
+          borderLeft: '1px solid rgba(139,148,158,0.18)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
           zIndex: 20,
-          paddingTop: 64,
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: '24px 20px 16px',
-            borderBottom: '1px solid rgba(0,212,255,0.08)',
+            borderBottom: '1px solid rgba(139,148,158,0.18)',
           }}
         >
-          <p
-            style={{
-              color: '#374151',
-              fontSize: 9,
-              fontFamily: 'var(--font-jetbrains-mono)',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}
-          >
-            Module · 01
-          </p>
+          <div className="label-caps text-[10px] text-text-muted" style={{ marginBottom: 6 }}>
+            Network
+          </div>
           <h1
             style={{
-              color: COLORS.neonBlue,
+              color: 'var(--primary)',
               fontSize: 20,
-              fontWeight: 700,
-              fontFamily: 'var(--font-space-grotesk)',
+              fontWeight: 600,
+              fontFamily: 'var(--font-display)',
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
               textShadow: `0 0 20px ${COLORS.neonBlue}60`,
@@ -311,18 +300,9 @@ export default function NetworkPage() {
 
         {/* Live stats */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <p
-            style={{
-              color: '#4b5563',
-              fontSize: 9,
-              fontFamily: 'var(--font-jetbrains-mono)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              marginBottom: 10,
-            }}
-          >
+          <div className="label-caps text-[10px] text-text-muted" style={{ marginBottom: 10 }}>
             Live Stats
-          </p>
+          </div>
           <div
             style={{
               display: 'grid',
@@ -349,24 +329,15 @@ export default function NetworkPage() {
                   marginBottom: 12,
                 }}
               >
-                <p
-                  style={{
-                    color: '#4b5563',
-                    fontSize: 9,
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
-                    margin: 0,
-                  }}
-                >
+                <div className="label-caps text-[10px] text-text-muted">
                   Selected Node
-                </p>
+                </div>
                 <button
                   onClick={() => setSelectedNode(null)}
                   style={{
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#6b7280',
+                    color: 'var(--text-muted)',
                     fontSize: 10,
                     fontFamily: 'var(--font-jetbrains-mono)',
                     padding: '2px 8px',
@@ -382,7 +353,7 @@ export default function NetworkPage() {
                 <div style={{ marginBottom: 12 }}>
                   <div
                     style={{
-                      color: COLORS.white,
+                      color: 'var(--text-primary)',
                       fontFamily: 'var(--font-jetbrains-mono)',
                       fontSize: 13,
                       fontWeight: 600,
@@ -405,13 +376,13 @@ export default function NetworkPage() {
                 >
                   {/* Country */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#4b5563' }}>Country</span>
-                    <span style={{ color: COLORS.white }}>{selectedNode.country}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Country</span>
+                    <span style={{ color: 'var(--text-primary)' }}>{selectedNode.country}</span>
                   </div>
 
                   {/* Latency */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#4b5563' }}>Latency</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Latency</span>
                     <span style={{ color: COLORS.green }}>
                       {formatLatency(selectedNode.latency)}
                     </span>
@@ -419,7 +390,7 @@ export default function NetworkPage() {
 
                   {/* Connections */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#4b5563' }}>Connections</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Connections</span>
                     <span style={{ color: COLORS.neonBlue }}>
                       {selectedNode.connections.length}
                     </span>
@@ -436,18 +407,9 @@ export default function NetworkPage() {
             <>
               {/* Legend */}
               <div style={{ marginBottom: 20 }}>
-                <p
-                  style={{
-                    color: '#4b5563',
-                    fontSize: 9,
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
-                    marginBottom: 12,
-                  }}
-                >
+                <div className="label-caps text-[10px] text-text-muted" style={{ marginBottom: 12 }}>
                   Node Types
-                </p>
+                </div>
                 <GlassPanel padding="14px" accentColor={COLORS.neonBlue}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <LegendDot color={COLORS.guard} label="Guard Node — Entry point" />
@@ -459,18 +421,9 @@ export default function NetworkPage() {
 
               {/* Network health */}
               <div>
-                <p
-                  style={{
-                    color: '#4b5563',
-                    fontSize: 9,
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
-                    marginBottom: 12,
-                  }}
-                >
+                <div className="label-caps text-[10px] text-text-muted" style={{ marginBottom: 12 }}>
                   Network Health
-                </p>
+                </div>
                 <GlassPanel padding="14px" accentColor={COLORS.green}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                     <div
@@ -496,7 +449,7 @@ export default function NetworkPage() {
                   </div>
                   <div
                     style={{
-                      color: '#4b5563',
+                      color: 'var(--text-muted)',
                       fontSize: 11,
                       fontFamily: 'var(--font-jetbrains-mono)',
                       lineHeight: 1.6,
@@ -516,8 +469,8 @@ export default function NetworkPage() {
         <div
           style={{
             padding: '12px 20px',
-            borderTop: '1px solid rgba(0,212,255,0.06)',
-            color: '#1f2937',
+            borderTop: '1px solid rgba(139,148,158,0.18)',
+            color: 'var(--border)',
             fontSize: 9,
             fontFamily: 'var(--font-jetbrains-mono)',
             letterSpacing: '0.08em',

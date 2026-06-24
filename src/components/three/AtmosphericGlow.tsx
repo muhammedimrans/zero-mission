@@ -12,7 +12,7 @@ interface AtmosphericGlowProps {
 
 export default function AtmosphericGlow({
   radius = 1.05,
-  color = '#00d4ff',
+  color = '#38bdf8',
   opacity = 0.12,
 }: AtmosphericGlowProps) {
   const meshRef = useRef<THREE.Mesh>(null)

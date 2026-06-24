@@ -156,7 +156,7 @@ function AttackSelector({ activeId, onSelect }: AttackSelectorProps) {
             style={{
               background: active ? `${atk.color}18` : 'rgba(255,255,255,0.04)',
               border: `1px solid ${active ? atk.color + '60' : 'rgba(255,255,255,0.1)'}`,
-              color: active ? atk.color : COLORS.muted,
+              color: active ? atk.color : 'var(--text-muted)',
               fontFamily: 'var(--font-jetbrains-mono)',
               boxShadow: active ? `0 0 20px ${atk.color}20` : 'none',
             }}
@@ -217,15 +217,14 @@ function AttackDetailPanel({ attack }: AttackDetailPanelProps) {
               Attack Vector
             </p>
             <h3
-              className="text-xl font-bold"
-              style={{ color: COLORS.white, fontFamily: 'var(--font-space-grotesk)' }}
+              className="font-display text-xl font-semibold text-text-primary"
             >
               {attack.name}
             </h3>
           </div>
           <VerdictBadge verdict={attack.verdict} color={attack.verdictColor} symbol={attack.verdictSymbol} />
         </div>
-        <p className="mt-3 text-sm leading-relaxed" style={{ color: COLORS.muted }}>
+        <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           {attack.description}
         </p>
       </GlassPanel>
@@ -255,7 +254,7 @@ function AttackDetailPanel({ attack }: AttackDetailPanelProps) {
         <p className="text-xs uppercase tracking-widest mb-2" style={{ color: COLORS.green, fontFamily: 'var(--font-jetbrains-mono)' }}>
           Zero Protocol Response
         </p>
-        <p className="text-sm leading-relaxed" style={{ color: COLORS.white }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
           {attack.mitigation}
         </p>
       </GlassPanel>
@@ -273,7 +272,7 @@ function AttackDetailPanel({ attack }: AttackDetailPanelProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.07 }}
               className="flex items-start gap-2 text-xs"
-              style={{ color: COLORS.white, fontFamily: 'var(--font-jetbrains-mono)' }}
+              style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains-mono)' }}
             >
               <span style={{ color: COLORS.neonBlue, flexShrink: 0 }}>&#8594;</span>
               {detail}
@@ -305,7 +304,7 @@ function MitigationPanel({ attack }: { attack: AttackDef }) {
     <div
       className="rounded-2xl overflow-hidden"
       style={{
-        background: 'rgba(10,10,20,0.7)',
+        background: 'rgba(6,15,31,0.7)',
         border: `1px solid rgba(255,255,255,0.06)`,
         backdropFilter: 'blur(20px)',
         padding: '1.25rem',
@@ -313,7 +312,7 @@ function MitigationPanel({ attack }: { attack: AttackDef }) {
     >
       <p
         className="text-xs uppercase tracking-widest mb-4"
-        style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}
+        style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}
       >
         Response Timeline
       </p>
@@ -342,7 +341,7 @@ function MitigationPanel({ attack }: { attack: AttackDef }) {
               />
               <span
                 className="text-xs"
-                style={{ color: COLORS.white, fontFamily: 'var(--font-jetbrains-mono)' }}
+                style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains-mono)' }}
               >
                 {step.label}
               </span>
@@ -362,7 +361,7 @@ export default function ThreatSimulatorPage() {
   const attack = ATTACKS.find((a) => a.id === activeAttack) ?? ATTACKS[0]
 
   return (
-    <main style={{ background: COLORS.bg, minHeight: '100vh', paddingTop: 80 }}>
+    <main style={{ minHeight: '100vh' }}>
 
       {/* ── Header ── */}
       <section className="relative py-20 text-center overflow-hidden">
@@ -378,16 +377,10 @@ export default function ThreatSimulatorPage() {
           transition={{ duration: 0.8 }}
           className="relative z-10 px-6"
         >
-          <p
-            className="text-xs uppercase tracking-widest mb-4"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}
-          >
-            Module &#xB7; 05
-          </p>
+          <div className="label-caps text-[10px] text-primary mb-3">Threat Simulator</div>
           <h1
-            className="text-5xl sm:text-7xl font-bold mb-5"
+            className="font-display text-[44px] md:text-[72px] font-semibold leading-[1.05] tracking-tight mb-5"
             style={{
-              fontFamily: 'var(--font-space-grotesk)',
               background: `linear-gradient(135deg, ${COLORS.red}, #ff8c00)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -399,7 +392,7 @@ export default function ThreatSimulatorPage() {
           </h1>
           <p
             className="text-base sm:text-lg max-w-2xl mx-auto"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-space-grotesk)', lineHeight: 1.8 }}
+            style={{ color: 'var(--text-muted)', lineHeight: 1.8 }}
           >
             Visualize how Zero Protocol defeats real-world attacks. Select an attack vector
             to see what the adversary observes — and how Sphinx stops them.
@@ -417,7 +410,7 @@ export default function ThreatSimulatorPage() {
           >
             <p
               className="text-center text-xs uppercase tracking-widest mb-4"
-              style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}
+              style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}
             >
               Select Attack Vector
             </p>
@@ -450,7 +443,7 @@ export default function ThreatSimulatorPage() {
                 >
                   <Suspense
                     fallback={
-                      <div className="flex h-full items-center justify-center" style={{ color: COLORS.muted }}>
+                      <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-muted)' }}>
                         Loading simulation...
                       </div>
                     }
@@ -535,8 +528,7 @@ export default function ThreatSimulatorPage() {
 
       {/* ── Attack overview grid ── */}
       <section
-        className="relative py-20 px-6"
-        style={{ background: COLORS.bgSecondary }}
+        className="relative py-20 px-6 border-t border-border bg-surface-low/30"
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -551,10 +543,8 @@ export default function ThreatSimulatorPage() {
             viewport={{ once: true }}
             className="text-center mb-14"
           >
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.red, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}>
-              Threat Model
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}>
+            <div className="label-caps text-[10px] text-primary mb-3">Attack Overview</div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
               Attack Surface Overview
             </h2>
           </motion.div>
@@ -573,7 +563,7 @@ export default function ThreatSimulatorPage() {
                 }}
                 className="relative rounded-2xl overflow-hidden text-left transition-all duration-200 cursor-pointer"
                 style={{
-                  background: 'rgba(10,10,20,0.7)',
+                  background: 'rgba(6,15,31,0.7)',
                   border: `1px solid ${atk.id === activeAttack ? atk.color + '50' : atk.color + '18'}`,
                   backdropFilter: 'blur(20px)',
                   padding: '1.25rem',
@@ -590,8 +580,7 @@ export default function ThreatSimulatorPage() {
                   {atk.shortName}
                 </p>
                 <p
-                  className="text-sm font-bold mb-3"
-                  style={{ color: COLORS.white, fontFamily: 'var(--font-space-grotesk)' }}
+                  className="font-display text-lg font-semibold text-text-primary mb-3"
                 >
                   {atk.name}
                 </p>

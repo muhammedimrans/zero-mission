@@ -186,7 +186,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
         <div className="flex items-center justify-between mb-3">
           <span
             className="text-xs uppercase tracking-widest"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}
+            style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}
           >
             Layer Inspector
           </span>
@@ -202,11 +202,11 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
           <>
             <h3
               className="text-xl font-bold mb-1"
-              style={{ color: currentLayer.color, fontFamily: 'var(--font-space-grotesk)' }}
+              style={{ color: currentLayer.color, fontFamily: 'var(--font-display)' }}
             >
               {currentLayer.name}
             </h3>
-            <p className="text-sm" style={{ color: COLORS.muted }}>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               {currentLayer.description}
             </p>
           </>
@@ -217,7 +217,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
         )}
 
         <div className="mt-4">
-          <div className="flex justify-between text-xs mb-1" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+          <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
             <span>Layers peeled</span>
             <span>{peeledCount}/5</span>
           </div>
@@ -234,7 +234,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
 
       {currentLayer && remaining > 0 && (
         <GlassPanel accentColor={COLORS.purple} padding="1rem">
-          <p className="text-xs uppercase tracking-widest mb-2" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+          <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
             Ephemeral Key
           </p>
           <code
@@ -248,7 +248,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
 
       {remaining > 0 && (
         <GlassPanel accentColor={COLORS.neonBlue} padding="1rem" className="flex-1">
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
             Operations at this hop
           </p>
           <ul className="space-y-2">
@@ -259,7 +259,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
                 className="flex items-center gap-2 text-sm"
-                style={{ color: COLORS.white }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 <span style={{ color: COLORS.green }}>&#10003;</span>
                 <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: 12 }}>{op}</span>
@@ -277,7 +277,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
           style={{
             background: remaining > 0 ? `${COLORS.neonBlue}18` : 'rgba(255,255,255,0.04)',
             border: `1px solid ${remaining > 0 ? COLORS.neonBlue : 'rgba(255,255,255,0.1)'}40`,
-            color: remaining > 0 ? COLORS.neonBlue : COLORS.muted,
+            color: remaining > 0 ? COLORS.neonBlue : 'var(--text-muted)',
             fontFamily: 'var(--font-jetbrains-mono)',
           }}
         >
@@ -289,7 +289,7 @@ function LayerInspector({ peeledCount, onPeel, onReset, peeling }: LayerInspecto
           style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.1)',
-            color: COLORS.muted,
+            color: 'var(--text-muted)',
             fontFamily: 'var(--font-jetbrains-mono)',
           }}
         >
@@ -356,7 +356,7 @@ function CryptoCard({ op, index }: CryptoCardProps) {
       className="relative rounded-2xl overflow-hidden flex-shrink-0 cursor-default"
       style={{
         width: 240,
-        background: 'rgba(10,10,20,0.7)',
+        background: 'linear-gradient(180deg, rgba(15,18,22,0.92) 0%, rgba(15,18,22,0.5) 100%)',
         border: `1px solid ${hovered ? op.color + '50' : op.color + '18'}`,
         backdropFilter: 'blur(20px)',
         padding: '1.5rem',
@@ -381,13 +381,13 @@ function CryptoCard({ op, index }: CryptoCardProps) {
       >
         {CRYPTO_ICONS[op.id]}
       </div>
-      <p className="text-xs uppercase tracking-widest mb-1" style={{ color: op.color, fontFamily: 'var(--font-jetbrains-mono)' }}>
+      <p className="label-caps text-[10px] text-primary mb-1" style={{ color: op.color }}>
         {op.subtitle}
       </p>
-      <h4 className="text-base font-bold mb-2" style={{ color: COLORS.white, fontFamily: 'var(--font-space-grotesk)' }}>
+      <h4 className="text-base font-bold mb-2" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-display)' }}>
         {op.title}
       </h4>
-      <p className="text-xs leading-relaxed" style={{ color: COLORS.muted }}>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
         {op.description}
       </p>
     </motion.div>
@@ -416,12 +416,12 @@ export default function SphinxPage() {
   }, [])
 
   return (
-    <main style={{ background: COLORS.bg, minHeight: '100vh' }}>
+    <main style={{ minHeight: '100vh' }}>
 
       {/* ── Section 1: Hero ── */}
       <section
         className="relative flex flex-col items-center justify-center text-center overflow-hidden"
-        style={{ minHeight: '100vh', paddingTop: 80 }}
+        style={{ minHeight: '100vh' }}
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -435,16 +435,12 @@ export default function SphinxPage() {
           transition={{ duration: 0.8 }}
           className="relative z-10 px-6"
         >
-          <p
-            className="text-xs uppercase tracking-widest mb-4"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}
-          >
-            Module &#xB7; 03
-          </p>
+          <div className="label-caps text-[10px] text-primary mb-3">
+            Sphinx Protocol
+          </div>
           <h1
-            className="text-5xl sm:text-7xl font-bold mb-6"
+            className="font-display text-[44px] md:text-[72px] font-semibold leading-[1.05] tracking-tight mb-6"
             style={{
-              fontFamily: 'var(--font-space-grotesk)',
               background: `linear-gradient(135deg, ${COLORS.purple}, ${COLORS.neonBlue})`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -456,7 +452,7 @@ export default function SphinxPage() {
           </h1>
           <p
             className="text-base sm:text-lg max-w-2xl mx-auto mb-10"
-            style={{ color: COLORS.muted, fontFamily: 'var(--font-space-grotesk)', lineHeight: 1.8 }}
+            style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', lineHeight: 1.8 }}
           >
             The Sphinx packet format wraps data in layered onion encryption.
             Each mix node peels exactly one layer — revealing only the next hop,
@@ -469,7 +465,7 @@ export default function SphinxPage() {
             transition={{ duration: 2, repeat: Infinity }}
           >
             <div className="flex flex-col items-center gap-2">
-              <span className="text-xs" style={{ color: COLORS.muted, fontFamily: 'var(--font-jetbrains-mono)' }}>
+              <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                 scroll to explore
               </span>
               <div className="w-px h-8" style={{ background: `linear-gradient(to bottom, ${COLORS.purple}60, transparent)` }} />
@@ -497,10 +493,10 @@ export default function SphinxPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.neonBlue, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}>
-              Interactive
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}>
+            <div className="label-caps text-[10px] text-primary mb-3">
+              Interactive Explorer
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
               Packet Layer Explorer
             </h2>
           </motion.div>
@@ -514,12 +510,12 @@ export default function SphinxPage() {
               style={{
                 height: 520,
                 background: 'rgba(5,5,8,0.8)',
-                border: `1px solid ${COLORS.neonBlue}18`,
+                border: '1px solid rgba(139,148,158,0.18)',
               }}
             >
               <Suspense
                 fallback={
-                  <div className="flex h-full items-center justify-center" style={{ color: COLORS.muted }}>
+                  <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-muted)' }}>
                     Loading 3D Scene...
                   </div>
                 }
@@ -557,8 +553,7 @@ export default function SphinxPage() {
 
       {/* ── Section 3: Cryptographic Operations ── */}
       <section
-        className="relative py-24 overflow-hidden"
-        style={{ background: COLORS.bgSecondary }}
+        className="relative py-24 overflow-hidden border-t border-border bg-surface-low/30"
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -573,13 +568,13 @@ export default function SphinxPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.purple, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}>
-              Cryptography
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}>
+            <div className="label-caps text-[10px] text-primary mb-3">
+              Cryptographic Operations
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
               Operations Per Hop
             </h2>
-            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: COLORS.muted }}>
+            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: 'var(--text-muted)' }}>
               Every mix node performs these operations in order — any failure causes silent packet drop.
             </p>
           </motion.div>
@@ -609,13 +604,13 @@ export default function SphinxPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ color: COLORS.green, fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.2em' }}>
-              Security Property
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ fontFamily: 'var(--font-space-grotesk)', color: COLORS.white }}>
+            <div className="label-caps text-[10px] text-primary mb-3">
+              Security Properties
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
               Forward Secrecy
             </h2>
-            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: COLORS.muted }}>
+            <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: 'var(--text-muted)' }}>
               Ephemeral keys are destroyed immediately after use. Compromising a node
               after the fact reveals nothing about past sessions.
             </p>
@@ -655,7 +650,7 @@ export default function SphinxPage() {
                         <p className="text-xs uppercase tracking-widest mb-1" style={{ color: COLORS.green, fontFamily: 'var(--font-jetbrains-mono)' }}>
                           {step.hop}
                         </p>
-                        <p className="text-sm" style={{ color: COLORS.white }}>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                           {step.action}
                         </p>
                       </div>

@@ -75,14 +75,24 @@ function generateTrafficPoint(i: number, phase: number): number {
   return Math.max(5, Math.min(95, base + noise))
 }
 
+// SSR-safe version — no Math.random(), produces deterministic output
+function generateTrafficPointSSR(i: number, phase: number): number {
+  const base = 50 + 30 * Math.sin((i / 20) * Math.PI + phase)
+  return Math.max(5, Math.min(95, base))
+}
+
+// ─── Card shell — bento-card values, compact padding ─────────────────────────
+
+const CARD_STYLE = {
+  background: 'linear-gradient(180deg, rgba(15,18,22,0.92) 0%, rgba(15,18,22,0.5) 100%)',
+  border: '1px solid rgba(139,148,158,0.18)',
+} as const
+
 // ─── Subcomponents ───────────────────────────────────────────────────────────
 
 function CardLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      className="text-xs font-semibold uppercase tracking-widest mb-2"
-      style={{ color: 'rgba(0, 212, 255, 0.6)', fontFamily: 'var(--font-jetbrains-mono)' }}
-    >
+    <p className="label-caps text-[10px] text-text-muted mb-2">
       {children}
     </p>
   )
@@ -96,16 +106,9 @@ interface MetricCardProps {
   children?: React.ReactNode
 }
 
-function MetricCard({ label, value, suffix = '', color = '#00d4ff', children }: MetricCardProps) {
+function MetricCard({ label, value, suffix = '', color = 'var(--primary)', children }: MetricCardProps) {
   return (
-    <div
-      className="rounded-xl p-4 flex flex-col gap-2"
-      style={{
-        background: 'rgba(10, 10, 20, 0.9)',
-        border: '1px solid rgba(0, 212, 255, 0.1)',
-        backdropFilter: 'blur(12px)',
-      }}
-    >
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={CARD_STYLE}>
       <CardLabel>{label}</CardLabel>
       <p
         className="text-2xl font-bold tabular-nums"
@@ -130,20 +133,20 @@ function GaugeArc({ percent }: { percent: number }) {
       <path
         d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
         fill="none"
-        stroke="rgba(0,212,255,0.12)"
+        stroke="rgba(139,148,158,0.18)"
         strokeWidth="5"
         strokeLinecap="round"
       />
       <path
         d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
         fill="none"
-        stroke="#00ff88"
+        stroke="#34d399"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray={`${filled} ${circumference}`}
-        style={{ filter: 'drop-shadow(0 0 6px #00ff88)' }}
+        style={{ filter: 'drop-shadow(0 0 6px #34d399)' }}
       />
-      <text x={cx} y={cy - 4} textAnchor="middle" fill="#00ff88" fontSize="9" fontFamily="var(--font-jetbrains-mono)">
+      <text x={cx} y={cy - 4} textAnchor="middle" fill="#34d399" fontSize="9" fontFamily="var(--font-jetbrains-mono)">
         {percent}%
       </text>
     </svg>
@@ -161,7 +164,7 @@ function NodeBar({ label, count, max, color }: { label: string; count: number; m
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between items-center">
-        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-jetbrains-mono)' }}>
+        <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
           {label}
         </span>
         <span className="text-xs font-bold tabular-nums" style={{ color, fontFamily: 'var(--font-jetbrains-mono)' }}>
@@ -192,27 +195,27 @@ function DonutChart({ percent }: { percent: number }) {
 
   return (
     <svg width="60" height="60" viewBox="0 0 60 60">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,212,255,0.1)" strokeWidth="6" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(139,148,158,0.18)" strokeWidth="6" />
       <circle
         cx={cx}
         cy={cy}
         r={r}
         fill="none"
-        stroke="#00d4ff"
+        stroke="var(--primary)"
         strokeWidth="6"
         strokeLinecap="round"
         strokeDasharray={`${dash} ${circumference}`}
         strokeDashoffset={circumference / 4}
-        style={{ transition: 'stroke-dasharray 1.2s ease-out', filter: 'drop-shadow(0 0 6px #00d4ff)' }}
+        style={{ transition: 'stroke-dasharray 1.2s ease-out', filter: 'drop-shadow(0 0 6px rgba(110,255,199,0.6))' }}
       />
-      <text x={cx} y={cy + 4} textAnchor="middle" fill="#00d4ff" fontSize="8" fontFamily="var(--font-jetbrains-mono)">
+      <text x={cx} y={cy + 4} textAnchor="middle" fill="var(--primary)" fontSize="8" fontFamily="var(--font-jetbrains-mono)">
         {percent}%
       </text>
     </svg>
   )
 }
 
-// Traffic line chart with two lines
+// Traffic line chart with two lines — inbound = mint (brand), outbound = purple (semantic)
 function TrafficChart({
   inbound,
   outbound,
@@ -229,7 +232,7 @@ function TrafficChart({
       })
       .join(' ')
 
-  const toFill = (data: number[], color: string) => {
+  const toFill = (data: number[]) => {
     const pts = data.map((v, i) => {
       const x = (i / (data.length - 1)) * 100
       const y = 100 - v
@@ -247,8 +250,8 @@ function TrafficChart({
     >
       <defs>
         <linearGradient id="inboundGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#00d4ff" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#00d4ff" stopOpacity="0" />
+          <stop offset="0%" stopColor="#6effc7" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#6effc7" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="outboundGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#a855f7" stopOpacity="0.2" />
@@ -256,24 +259,16 @@ function TrafficChart({
         </linearGradient>
       </defs>
       {/* Fill areas */}
-      <polygon
-        points={toFill(inbound, '#00d4ff')}
-        fill="url(#inboundGrad)"
-        style={{ transition: 'd 0.5s ease' }}
-      />
-      <polygon
-        points={toFill(outbound, '#a855f7')}
-        fill="url(#outboundGrad)"
-        style={{ transition: 'd 0.5s ease' }}
-      />
+      <polygon points={toFill(inbound)} fill="url(#inboundGrad)" />
+      <polygon points={toFill(outbound)} fill="url(#outboundGrad)" />
       {/* Lines */}
       <polyline
         points={toPoints(inbound)}
         fill="none"
-        stroke="#00d4ff"
+        stroke="#6effc7"
         strokeWidth="0.8"
         strokeLinejoin="round"
-        style={{ filter: 'drop-shadow(0 0 2px #00d4ff)', transition: 'points 0.5s ease' }}
+        style={{ filter: 'drop-shadow(0 0 2px rgba(110,255,199,0.6))' }}
       />
       <polyline
         points={toPoints(outbound)}
@@ -281,7 +276,7 @@ function TrafficChart({
         stroke="#a855f7"
         strokeWidth="0.8"
         strokeLinejoin="round"
-        style={{ filter: 'drop-shadow(0 0 2px #a855f7)', transition: 'points 0.5s ease' }}
+        style={{ filter: 'drop-shadow(0 0 2px #a855f7)' }}
       />
     </svg>
   )
@@ -304,67 +299,33 @@ function WorldMap() {
 
   return (
     <svg viewBox="0 0 100 65" className="w-full h-full" style={{ opacity: 0.85 }}>
-      {/* Simplified continental outlines */}
-      {/* North America */}
-      <path
-        d="M15,22 L18,18 L25,17 L32,20 L35,28 L33,38 L28,44 L22,42 L18,36 L15,28 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
-      {/* South America */}
-      <path
-        d="M28,45 L32,44 L36,48 L37,58 L33,62 L28,60 L26,52 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
-      {/* Europe */}
-      <path
-        d="M43,18 L48,16 L55,18 L57,24 L54,28 L48,30 L43,27 L42,22 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
-      {/* Africa */}
-      <path
-        d="M44,30 L52,28 L56,32 L56,46 L52,54 L47,54 L43,46 L42,36 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
-      {/* Asia */}
-      <path
-        d="M57,14 L78,12 L84,18 L82,28 L75,34 L65,36 L57,32 L55,24 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
-      {/* Australia */}
-      <path
-        d="M76,50 L84,48 L88,54 L86,60 L78,62 L74,57 Z"
-        fill="rgba(0,212,255,0.04)"
-        stroke="rgba(0,212,255,0.18)"
-        strokeWidth="0.4"
-      />
+      {/* Simplified continental outlines — neutral gray fill/stroke */}
+      <path d="M15,22 L18,18 L25,17 L32,20 L35,28 L33,38 L28,44 L22,42 L18,36 L15,28 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
+      <path d="M28,45 L32,44 L36,48 L37,58 L33,62 L28,60 L26,52 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
+      <path d="M43,18 L48,16 L55,18 L57,24 L54,28 L48,30 L43,27 L42,22 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
+      <path d="M44,30 L52,28 L56,32 L56,46 L52,54 L47,54 L43,46 L42,36 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
+      <path d="M57,14 L78,12 L84,18 L82,28 L75,34 L65,36 L57,32 L55,24 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
+      <path d="M76,50 L84,48 L88,54 L86,60 L78,62 L74,57 Z"
+        fill="rgba(139,148,158,0.04)" stroke="rgba(139,148,158,0.18)" strokeWidth="0.4" />
 
-      {/* Node dots with pulse */}
-      {nodes.map((n) => (
-        <g key={n.label}>
-          <circle
-            cx={n.cx}
-            cy={n.cy}
-            r="2.5"
-            fill="rgba(0,212,255,0.15)"
-            stroke="rgba(0,212,255,0.4)"
-            strokeWidth="0.3"
-          >
-            <animate attributeName="r" values="2.5;4;2.5" dur="2s" repeatCount="indefinite" begin={`${Math.random() * 2}s`} />
-            <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite" begin={`${Math.random() * 2}s`} />
-          </circle>
-          <circle cx={n.cx} cy={n.cy} r="1" fill="#00d4ff" style={{ filter: 'drop-shadow(0 0 3px #00d4ff)' }} />
-        </g>
-      ))}
+      {/* Node dots — mint brand color, deterministic delays for SSR safety */}
+      {nodes.map((n, i) => {
+        const delay = `${((i * 0.2) % 2).toFixed(1)}s`
+        return (
+          <g key={n.label}>
+            <circle cx={n.cx} cy={n.cy} r="2.5" fill="rgba(110,255,199,0.15)" stroke="rgba(110,255,199,0.4)" strokeWidth="0.3">
+              <animate attributeName="r" values="2.5;4;2.5" dur="2s" repeatCount="indefinite" begin={delay} />
+              <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite" begin={delay} />
+            </circle>
+            <circle cx={n.cx} cy={n.cy} r="1" fill="#6effc7" style={{ filter: 'drop-shadow(0 0 3px rgba(110,255,199,0.6))' }} />
+          </g>
+        )
+      })}
     </svg>
   )
 }
@@ -378,9 +339,9 @@ function EventIcon({ type }: { type: SecurityEvent['type'] }) {
     warn: '⚠',
   }
   const colors: Record<SecurityEvent['type'], string> = {
-    circuit: '#00d4ff',
+    circuit: 'var(--primary)',
     dht: '#a855f7',
-    node: '#00ff88',
+    node: '#34d399',
     warn: '#f59e0b',
   }
   return (
@@ -439,13 +400,17 @@ export default function DashboardPage() {
   // Traffic chart data
   const phaseRef = useRef(0)
   const [inboundData, setInboundData] = useState<number[]>(() =>
-    Array.from({ length: 60 }, (_, i) => generateTrafficPoint(i, 0))
+    Array.from({ length: 60 }, (_, i) => generateTrafficPointSSR(i, 0))
   )
   const [outboundData, setOutboundData] = useState<number[]>(() =>
-    Array.from({ length: 60 }, (_, i) => generateTrafficPoint(i, Math.PI))
+    Array.from({ length: 60 }, (_, i) => generateTrafficPointSSR(i, Math.PI))
   )
 
   useEffect(() => {
+    // Seed with real random data immediately after hydration
+    setInboundData(Array.from({ length: 60 }, (_, i) => generateTrafficPoint(i, 0)))
+    setOutboundData(Array.from({ length: 60 }, (_, i) => generateTrafficPoint(i, Math.PI)))
+
     const id = setInterval(() => {
       phaseRef.current += 0.1
       const p = phaseRef.current
@@ -463,14 +428,19 @@ export default function DashboardPage() {
 
   // Security events feed
   const eventCounterRef = useRef(100)
-  const [events, setEvents] = useState<SecurityEvent[]>(() => {
-    const initial: SecurityEvent[] = []
-    for (let i = 0; i < 8; i++) {
-      const pool = EVENT_POOL[i % EVENT_POOL.length]
-      initial.push({ id: i, type: pool.type, message: pool.message, ts: nowTs() })
-    }
-    return initial
-  })
+  const [events, setEvents] = useState<SecurityEvent[]>(() =>
+    EVENT_POOL.slice(0, 8).map((pool, i) => ({
+      id: i,
+      type: pool.type,
+      message: pool.message,
+      ts: '',
+    }))
+  )
+
+  // Populate real timestamps after hydration (nowTs() must not run during SSR)
+  useEffect(() => {
+    setEvents((prev) => prev.map((e) => (e.ts === '' ? { ...e, ts: nowTs() } : e)))
+  }, [])
 
   const addEvent = useCallback(() => {
     const pool = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)]
@@ -488,28 +458,25 @@ export default function DashboardPage() {
     return () => clearInterval(id)
   }, [addEvent])
 
-  // Stagger animation variants
+  // Stagger animation variants — exact Zero Website pattern (y:8, 0.35s, easeOut)
   const containerVariants: Variants = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.07 } },
   }
   const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
   }
 
   return (
-    <div
-      className="min-h-screen pt-16"
-      style={{ background: '#050508' }}
-    >
+    <div className="min-h-screen">
       {/* ── Header ── */}
       <div
-        className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
+        className="sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
         style={{
-          background: 'rgba(5, 5, 8, 0.92)',
+          background: 'rgba(8,9,10,0.92)',
           backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(0, 212, 255, 0.1)',
+          borderBottom: '1px solid rgba(139,148,158,0.18)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -517,8 +484,8 @@ export default function DashboardPage() {
             className="text-sm sm:text-base font-bold uppercase tracking-widest"
             style={{
               fontFamily: 'var(--font-jetbrains-mono)',
-              color: '#00d4ff',
-              textShadow: '0 0 20px rgba(0,212,255,0.4)',
+              color: 'var(--primary)',
+              textShadow: '0 0 20px rgba(110,255,199,0.4)',
             }}
           >
             ZERO PROTOCOL OPERATIONS CENTER
@@ -527,7 +494,7 @@ export default function DashboardPage() {
         </div>
         <span
           className="text-sm tabular-nums"
-          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(0,212,255,0.7)' }}
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'var(--text-muted)' }}
         >
           {clock}
         </span>
@@ -548,10 +515,10 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Network Health</CardLabel>
-            <p className="text-3xl font-bold" style={{ color: '#00ff88', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #00ff8855' }}>
+            <p className="text-3xl font-bold" style={{ color: '#34d399', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #34d39955' }}>
               98.7%
             </p>
             <GaugeArc percent={98.7} />
@@ -578,17 +545,17 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-4"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Node Status</CardLabel>
             <NodeBar label="Guard" count={847} max={1400} color="#3b82f6" />
             <NodeBar label="Mix" count={1293} max={1400} color="#a855f7" />
-            <NodeBar label="Exit" count={707} max={1400} color="#00ff88" />
-            <div className="mt-1 pt-3 flex justify-between" style={{ borderTop: '1px solid rgba(0,212,255,0.06)' }}>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-jetbrains-mono)' }}>
+            <NodeBar label="Exit" count={707} max={1400} color="#34d399" />
+            <div className="mt-1 pt-3 flex justify-between" style={{ borderTop: '1px solid rgba(139,148,158,0.12)' }}>
+              <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                 Total
               </span>
-              <span className="text-xs font-bold" style={{ color: '#00d4ff', fontFamily: 'var(--font-jetbrains-mono)' }}>
+              <span className="text-xs font-bold" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                 2,847 nodes
               </span>
             </div>
@@ -598,7 +565,7 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>DHT Health</CardLabel>
             <div className="flex items-center gap-4">
@@ -611,10 +578,10 @@ export default function DashboardPage() {
                   ['Peers', '2,847'],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-3 items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-jetbrains-mono)', whiteSpace: 'nowrap' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)', whiteSpace: 'nowrap' }}>
                       {k}
                     </span>
-                    <span className="text-xs font-bold" style={{ color: '#00d4ff', fontFamily: 'var(--font-jetbrains-mono)' }}>
+                    <span className="text-xs font-bold" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                       {v}
                     </span>
                   </div>
@@ -627,13 +594,13 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 lg:col-span-6 rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <div className="flex items-center justify-between">
               <CardLabel>Traffic Metrics</CardLabel>
               <div className="flex items-center gap-4 mb-2">
-                <span className="flex items-center gap-1.5 text-xs" style={{ color: '#00d4ff', fontFamily: 'var(--font-jetbrains-mono)' }}>
-                  <span className="inline-block w-6 h-0.5" style={{ background: '#00d4ff' }} />
+                <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)' }}>
+                  <span className="inline-block w-6 h-0.5" style={{ background: 'var(--primary)' }} />
                   Inbound
                 </span>
                 <span className="flex items-center gap-1.5 text-xs" style={{ color: '#a855f7', fontFamily: 'var(--font-jetbrains-mono)' }}>
@@ -653,7 +620,7 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 lg:col-span-4 rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Circuit Builder</CardLabel>
             <div className="flex flex-col gap-2">
@@ -664,11 +631,11 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + idx * 0.1, duration: 0.35 }}
                   className="flex items-center justify-between px-3 py-2 rounded-lg"
-                  style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.07)' }}
+                  style={{ background: 'rgba(139,148,158,0.04)', border: '1px solid rgba(139,148,158,0.1)' }}
                 >
                   <span
                     className="text-xs tabular-nums"
-                    style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.05em' }}
+                    style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)', letterSpacing: '0.05em' }}
                   >
                     {circuit.id}
                   </span>
@@ -678,8 +645,8 @@ export default function DashboardPage() {
                         key={hi}
                         className="inline-block w-2.5 h-2.5 rounded-full"
                         style={{
-                          background: hop === 'guard' ? '#3b82f6' : hop === 'mix' ? '#a855f7' : '#00ff88',
-                          boxShadow: `0 0 5px ${hop === 'guard' ? '#3b82f6' : hop === 'mix' ? '#a855f7' : '#00ff88'}`,
+                          background: hop === 'guard' ? '#3b82f6' : hop === 'mix' ? '#a855f7' : '#34d399',
+                          boxShadow: `0 0 5px ${hop === 'guard' ? '#3b82f6' : hop === 'mix' ? '#a855f7' : '#34d399'}`,
                         }}
                         title={hop}
                       />
@@ -695,15 +662,15 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 lg:col-span-4 rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Geographic Distribution</CardLabel>
             <div className="flex-1 flex items-center justify-center" style={{ minHeight: '140px' }}>
               <WorldMap />
             </div>
-            <div className="flex justify-between text-xs" style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-jetbrains-mono)' }}>
+            <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
               <span>10 regions</span>
-              <span style={{ color: '#00d4ff' }}>2,847 nodes active</span>
+              <span style={{ color: 'var(--primary)' }}>2,847 nodes active</span>
             </div>
           </motion.div>
 
@@ -711,13 +678,10 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 lg:col-span-4 rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Security Events</CardLabel>
-            <div
-              className="flex flex-col gap-1.5 overflow-hidden"
-              style={{ maxHeight: '210px' }}
-            >
+            <div className="flex flex-col gap-1.5 overflow-hidden" style={{ maxHeight: '210px' }}>
               {events.map((ev, idx) => (
                 <motion.div
                   key={ev.id}
@@ -726,15 +690,15 @@ export default function DashboardPage() {
                   transition={{ duration: 0.3 }}
                   className="flex items-start gap-2 px-2.5 py-2 rounded-lg flex-shrink-0"
                   style={{
-                    background: idx === 0 ? 'rgba(0,212,255,0.04)' : 'transparent',
-                    border: idx === 0 ? '1px solid rgba(0,212,255,0.08)' : '1px solid transparent',
+                    background: idx === 0 ? 'rgba(110,255,199,0.04)' : 'transparent',
+                    border: idx === 0 ? '1px solid rgba(110,255,199,0.12)' : '1px solid transparent',
                   }}
                 >
                   <EventIcon type={ev.type} />
-                  <span className="text-xs flex-1" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: 'var(--font-jetbrains-mono)', lineHeight: '1.4' }}>
+                  <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains-mono)', lineHeight: '1.4' }}>
                     {ev.message}
                   </span>
-                  <span className="text-xs flex-shrink-0" style={{ color: 'rgba(0,212,255,0.4)', fontFamily: 'var(--font-jetbrains-mono)' }}>
+                  <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>
                     {ev.ts}
                   </span>
                 </motion.div>
@@ -746,18 +710,17 @@ export default function DashboardPage() {
           <motion.div
             variants={cardVariants}
             className="col-span-12 rounded-xl p-4 flex flex-col gap-4"
-            style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.1)', backdropFilter: 'blur(12px)' }}
+            style={CARD_STYLE}
           >
             <CardLabel>Hidden Services Status</CardLabel>
             <div className="overflow-x-auto">
               <table className="w-full text-xs" style={{ fontFamily: 'var(--font-jetbrains-mono)', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(0,212,255,0.1)' }}>
+                  <tr style={{ borderBottom: '1px solid rgba(139,148,158,0.18)' }}>
                     {['Service Hash', 'Status', 'Circuits', 'Uptime', 'Intro Points'].map((h) => (
                       <th
                         key={h}
-                        className="text-left py-2 px-3 font-semibold uppercase tracking-widest"
-                        style={{ color: 'rgba(0,212,255,0.5)', fontSize: '10px' }}
+                        className="text-left py-2 px-3 label-caps text-[10px] text-text-muted"
                       >
                         {h}
                       </th>
@@ -772,27 +735,27 @@ export default function DashboardPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 + idx * 0.1, duration: 0.35 }}
                       className="group cursor-default transition-colors duration-150"
-                      style={{ borderBottom: '1px solid rgba(0,212,255,0.05)' }}
+                      style={{ borderBottom: '1px solid rgba(139,148,158,0.08)' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(0,212,255,0.04)'
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = 'transparent'
                       }}
                     >
-                      <td className="py-3 px-3" style={{ color: 'rgba(255,255,255,0.7)', letterSpacing: '0.05em' }}>
+                      <td className="py-3 px-3" style={{ color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
                         {svc.hash}
                       </td>
                       <td className="py-3 px-3">
                         <StatusBadge status={svc.status} />
                       </td>
-                      <td className="py-3 px-3" style={{ color: '#00d4ff' }}>
+                      <td className="py-3 px-3" style={{ color: 'var(--primary)' }}>
                         {svc.circuits}
                       </td>
-                      <td className="py-3 px-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      <td className="py-3 px-3" style={{ color: 'var(--text-secondary)' }}>
                         {svc.uptime}
                       </td>
-                      <td className="py-3 px-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      <td className="py-3 px-3" style={{ color: 'var(--text-secondary)' }}>
                         {svc.introPoints}
                       </td>
                     </motion.tr>

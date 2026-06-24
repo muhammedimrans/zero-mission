@@ -50,7 +50,7 @@ function HeroGlobe({ radius = 1 }: { radius?: number }) {
       <mesh>
         <sphereGeometry args={[radius + 0.002, 36, 36]} />
         <meshBasicMaterial
-          color="#00d4ff"
+          color="#38bdf8"
           wireframe
           transparent
           opacity={0.15}
@@ -75,7 +75,7 @@ function HeroGlobe({ radius = 1 }: { radius?: number }) {
       <mesh ref={glow2Ref}>
         <sphereGeometry args={[radius * 1.05, 64, 64]} />
         <meshBasicMaterial
-          color="#7c3aed"
+          color="#818cf8"
           transparent
           opacity={0.05}
           side={THREE.BackSide}
@@ -224,7 +224,7 @@ function RouteArcs({ globeRadius = 1 }: { globeRadius?: number }) {
     const result: THREE.Line[] = []
 
     const mat = new THREE.LineBasicMaterial({
-      color: '#00d4ff',
+      color: '#38bdf8',
       transparent: true,
       opacity: 0.1,
       depthWrite: false,
@@ -279,7 +279,7 @@ function PacketDots({ globeRadius = 1 }: { globeRadius?: number }) {
     if (nodes.length < 2) return []
     const nodeMap = new Map(nodes.map((n) => [n.id, n]))
     const result: PacketDot[] = []
-    const colors = ['#00d4ff', '#7c3aed', '#00ff88']
+    const colors = ['#38bdf8', '#818cf8', '#34d399']
 
     nodes.slice(0, 20).forEach((node, idx) => {
       const targetId = node.connections[0]
@@ -379,8 +379,8 @@ function SceneLights() {
   return (
     <>
       <ambientLight intensity={0.3} color="#1a2a4a" />
-      <pointLight position={[4, 4, 4]} intensity={1.5} color="#00d4ff" distance={20} />
-      <pointLight position={[-4, -2, -4]} intensity={0.8} color="#7c3aed" distance={15} />
+      <pointLight position={[4, 4, 4]} intensity={1.5} color="#38bdf8" distance={20} />
+      <pointLight position={[-4, -2, -4]} intensity={0.8} color="#818cf8" distance={15} />
       <pointLight position={[0, 6, 0]} intensity={0.5} color="#ffffff" distance={12} />
     </>
   )

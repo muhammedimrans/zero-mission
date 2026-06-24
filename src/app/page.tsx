@@ -10,123 +10,92 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import FeatureCard from '@/components/ui/FeatureCard'
 import SectionReveal from '@/components/layout/SectionReveal'
 
-// ── Feature data ─────────────────────────────────────────────────────────────
+// ── Feature data — from Zero Protocol whitepaper ─────────────────
 
 const FEATURES = [
   {
     title: 'Sphinx Routing',
     description:
       'Multi-layer encrypted packet routing with mathematically unlinkable hops. Each relay peels one encryption layer, knowing only the previous and next hop — never the full path.',
-    icon: '🔀',
-    gradient: 'linear-gradient(135deg, #00d4ff, #0077cc)',
+    tag: 'L2+',
   },
   {
-    title: 'Mix Network',
+    title: 'Selective Mixnet',
     description:
-      'Mathematically proven traffic anonymization via timed packet mixing. Nodes collect, reorder, and batch-release messages to defeat traffic analysis and correlation attacks.',
-    icon: '🌊',
-    gradient: 'linear-gradient(135deg, #7c3aed, #4c1d95)',
+      'At L3/L4, packets are padded, Poisson-delayed and shuffled across two mix hops. Ingress and egress timing cannot be correlated.',
+    tag: 'L3+',
   },
   {
     title: 'Hidden Services',
     description:
       'Publish and discover services without revealing server locations or IP addresses. Rendezvous-point architecture ensures both client and server remain mutually anonymous.',
-    icon: '🕵️',
-    gradient: 'linear-gradient(135deg, #00ff88, #007744)',
+    tag: 'Design',
   },
   {
-    title: 'Credential System',
+    title: 'Post-Quantum Crypto',
     description:
-      'Privacy-preserving authentication using zero-knowledge proofs. Prove membership and reputation without revealing identity, linking sessions, or exposing usage patterns.',
-    icon: '🔐',
-    gradient: 'linear-gradient(135deg, #00d4ff, #7c3aed)',
+      'Hybrid ML-KEM-768 + X25519 handshakes. An attacker must break both the classical and post-quantum parts simultaneously.',
+    tag: 'PQ',
   },
   {
-    title: 'Post-Quantum',
+    title: 'Cover Traffic',
     description:
-      'CRYSTALS-Kyber key encapsulation and CRYSTALS-Dilithium digital signatures protect all communications against attacks from both classical and quantum adversaries.',
-    icon: '⚛️',
-    gradient: 'linear-gradient(135deg, #ff6b6b, #7c3aed)',
+      'Continuous decoy cells at L3/L4 keep traffic volume constant. Idle periods vanish into statistical noise.',
+    tag: 'L3+',
   },
   {
     title: 'Distributed Hash Table',
     description:
-      'Censorship-resistant service discovery with k-anonymity guarantees. No central directory server — nodes collectively maintain a resilient, replicated routing table.',
-    icon: '🗺️',
-    gradient: 'linear-gradient(135deg, #00ff88, #00d4ff)',
+      'Censorship-resistant service discovery with k-anonymity guarantees. No central directory — nodes collectively maintain a resilient, replicated routing table.',
+    tag: 'Design',
   },
 ]
 
-// ── Metrics ───────────────────────────────────────────────────────────────────
+// ── Metrics ───────────────────────────────────────────────────────
 
 const METRICS = [
-  { label: 'Active Nodes', value: 2847, suffix: '' },
-  { label: 'Circuits', value: 14293, suffix: '' },
-  { label: 'Packets / sec', value: 892441, suffix: '' },
-  { label: 'Hidden Services', value: 1204, suffix: '' },
+  { label: 'Active Nodes',    value: 2847,   suffix: '' },
+  { label: 'Circuits',        value: 14293,  suffix: '' },
+  { label: 'Packets / sec',   value: 892441, suffix: '' },
+  { label: 'Hidden Services', value: 1204,   suffix: '' },
 ]
 
-// ── Hero text variants ────────────────────────────────────────────────────────
+// ── Animation variants — from Zero Website ────────────────────────
 
 const container = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.3,
-    },
-  },
+  show: { transition: { staggerChildren: 0.08 } },
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 8 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: { duration: 0.35, ease: 'easeOut' as const },
   },
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────
 
 export default function Home() {
-  // Populate the global store with network data
   useNetworkData()
-
   const heroRef = useRef<HTMLDivElement>(null)
 
   return (
-    <main style={{ background: '#050508', color: '#f0f4ff', overflowX: 'hidden' }}>
-
+    <>
       {/* ── HERO ── */}
       <section
         ref={heroRef}
-        style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}
+        className="relative overflow-hidden"
+        style={{ height: '100vh' }}
       >
-        {/* R3F Canvas — absolute fill */}
-        <div style={{ position: 'absolute', inset: 0 }}>
+        {/* Three.js canvas — absolute fill */}
+        <div className="absolute inset-0">
           <Suspense
             fallback={
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: '#050508',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <span
-                  style={{
-                    color: '#00d4ff',
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                    fontSize: 12,
-                    opacity: 0.5,
-                    letterSpacing: '0.2em',
-                  }}
-                >
-                  INITIALIZING...
-                </span>
+              <div className="flex h-full w-full items-center justify-center bg-background">
+                <span className="label-caps text-[10px] text-text-muted">Initializing...</span>
               </div>
             }
           >
@@ -141,196 +110,84 @@ export default function Home() {
           </Suspense>
         </div>
 
-        {/* Radial vignette so text is always legible */}
+        {/* Vignette — updated to near-black (#08090a) matching --background */}
         <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
           style={{
-            position: 'absolute',
-            inset: 0,
             background:
-              'radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, rgba(5,5,8,0.55) 70%, rgba(5,5,8,0.85) 100%)',
-            pointerEvents: 'none',
+              'radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, rgba(8,9,10,0.55) 70%, rgba(8,9,10,0.92) 100%)',
           }}
         />
 
-        {/* Hero text overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingTop: 64,
-            pointerEvents: 'none',
-          }}
-        >
+        {/* radial-mint glow overlay */}
+        <div aria-hidden className="radial-mint absolute inset-0 pointer-events-none" />
+
+        {/* Hero content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pt-16 md:px-12">
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1rem',
-              textAlign: 'center',
-              pointerEvents: 'auto',
-            }}
+            className="flex flex-col items-center text-center"
           >
-            {/* Badge */}
+            {/* Status chip — exact StatusChip primary pattern */}
             <motion.div variants={fadeUp}>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '4px 14px',
-                  borderRadius: 9999,
-                  background: 'rgba(0, 212, 255, 0.08)',
-                  border: '1px solid rgba(0, 212, 255, 0.22)',
-                  color: '#00d4ff',
-                  fontFamily: 'var(--font-jetbrains-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: '#00d4ff',
-                    boxShadow: '0 0 8px #00d4ff',
-                  }}
-                />
-                Network Online · 2,847 Nodes
+              <span className="inline-flex items-center gap-2 rounded-full border border-secondary/30 bg-secondary/[0.08] px-3 py-1 label-caps text-[10px] text-secondary">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-secondary" />
+                Project in testing — network live
               </span>
             </motion.div>
 
-            {/* Main title */}
+            {/* Title — exact Zero Website h1 pattern */}
             <motion.h1
               variants={fadeUp}
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 'clamp(48px, 8vw, 80px)',
-                fontWeight: 700,
-                color: '#f0f4ff',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                margin: 0,
-                lineHeight: 1,
-                textShadow: '0 0 60px rgba(0, 212, 255, 0.15)',
-              }}
+              className="mt-8 max-w-4xl font-display text-[44px] font-semibold leading-[1.05] tracking-tight text-text-primary md:text-[72px]"
             >
-              ZERO PROTOCOL
+              The protocol that hides{' '}
+              <span className="bg-gradient-to-r from-primary via-primary-dim to-secondary bg-clip-text text-transparent">
+                the metadata
+              </span>
+              .
             </motion.h1>
 
-            {/* Sub-lines */}
+            {/* Subtitle */}
             <motion.p
               variants={fadeUp}
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 'clamp(16px, 2.5vw, 24px)',
-                color: '#00d4ff',
-                margin: 0,
-                textShadow: '0 0 24px rgba(0,212,255,0.5)',
-              }}
+              className="mt-6 max-w-2xl text-base text-text-secondary md:text-lg"
             >
-              Private Internet Infrastructure
+              Zero Protocol is a hybrid VPN and selective mixnet. A VPN encrypts what you send —
+              Zero Protocol also erases the timing, size, and routing patterns that identify you.
             </motion.p>
 
-            <motion.p
-              variants={fadeUp}
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 'clamp(14px, 2vw, 24px)',
-                color: '#4a5568',
-                margin: 0,
-              }}
-            >
-              for the Post-Quantum Era
-            </motion.p>
-
-            {/* CTA buttons */}
+            {/* CTA buttons — exact ButtonPrimary / ButtonGhost pattern */}
             <motion.div
               variants={fadeUp}
-              style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}
+              className="mt-10 flex flex-col gap-3 sm:flex-row"
             >
-              <Link
-                href="/network"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 28px',
-                  borderRadius: 8,
-                  border: '1px solid #00d4ff',
-                  color: '#00d4ff',
-                  background: 'rgba(0, 212, 255, 0.06)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  fontFamily: 'var(--font-space-grotesk)',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  letterSpacing: '0.06em',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.background = '#00d4ff'
-                  el.style.color = '#050508'
-                  el.style.boxShadow = '0 0 32px rgba(0,212,255,0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.background = 'rgba(0, 212, 255, 0.06)'
-                  el.style.color = '#00d4ff'
-                  el.style.boxShadow = 'none'
-                }}
-              >
+              <Link href="/network" className="btn btn-primary" style={{ textDecoration: 'none' }}>
                 Explore Network
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
               </Link>
-
-              <Link
-                href="/architecture"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 28px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(240,244,255,0.25)',
-                  color: '#f0f4ff',
-                  background: 'rgba(240, 244, 255, 0.04)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  fontFamily: 'var(--font-space-grotesk)',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  letterSpacing: '0.06em',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.borderColor = 'rgba(240,244,255,0.55)'
-                  el.style.background = 'rgba(240,244,255,0.08)'
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.borderColor = 'rgba(240,244,255,0.25)'
-                  el.style.background = 'rgba(240, 244, 255, 0.04)'
-                }}
-              >
+              <Link href="/architecture" className="btn btn-ghost" style={{ textDecoration: 'none' }}>
                 Architecture
               </Link>
             </motion.div>
+
+            {/* Stats bar — exact gap-px pattern from Zero Website */}
+            <motion.dl
+              variants={fadeUp}
+              className="mt-16 grid w-full max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4"
+            >
+              {METRICS.map((m) => (
+                <div key={m.label} className="bg-surface px-6 py-6 text-left">
+                  <dt className="sr-only">{m.label}</dt>
+                  <dd className="font-display text-2xl font-semibold tabular-nums text-text-primary md:text-3xl">
+                    <AnimatedCounter value={m.value} duration={2200} suffix={m.suffix} />
+                  </dd>
+                  <div className="label-caps mt-1 text-[10px] text-text-muted">{m.label}</div>
+                </div>
+              ))}
+            </motion.dl>
           </motion.div>
         </div>
 
@@ -339,354 +196,84 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 0.8 }}
-          style={{
-            position: 'absolute',
-            bottom: 32,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 6,
-            pointerEvents: 'none',
-          }}
+          aria-hidden
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none"
         >
-          <span
-            style={{
-              color: '#4a5568',
-              fontFamily: 'var(--font-jetbrains-mono)',
-              fontSize: 10,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Scroll
-          </span>
+          <span className="label-caps text-[9px] text-text-muted">Scroll</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-            style={{ width: 1, height: 28, background: 'linear-gradient(to bottom, #00d4ff60, transparent)' }}
+            className="w-px h-7"
+            style={{ background: 'linear-gradient(to bottom, rgba(110,255,199,0.4), transparent)' }}
           />
         </motion.div>
       </section>
 
-      {/* ── METRICS BAR ── */}
-      <SectionReveal>
-        <div
-          style={{
-            width: '100%',
-            background: 'rgba(10, 10, 20, 0.75)',
-            borderTop: '1px solid rgba(0,212,255,0.1)',
-            borderBottom: '1px solid rgba(0,212,255,0.1)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}
-        >
-          <div
-            style={{
-              maxWidth: 1200,
-              margin: '0 auto',
-              padding: '0 24px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-            }}
-          >
-            {METRICS.map((metric, i) => (
-              <div
-                key={metric.label}
-                style={{
-                  padding: '2rem 1.5rem',
-                  textAlign: 'center',
-                  position: 'relative',
-                }}
-              >
-                {/* Separator */}
-                {i > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: '25%',
-                      height: '50%',
-                      width: 1,
-                      background: 'rgba(0,212,255,0.12)',
-                    }}
-                  />
-                )}
-
-                {/* Number */}
-                <div
-                  style={{
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                    fontSize: 'clamp(28px, 4vw, 48px)',
-                    fontWeight: 700,
-                    color: '#00d4ff',
-                    textShadow: '0 0 24px rgba(0,212,255,0.4)',
-                    lineHeight: 1,
-                    marginBottom: 8,
-                  }}
-                >
-                  <AnimatedCounter
-                    value={metric.value}
-                    duration={2200}
-                    suffix={metric.suffix}
-                  />
-                </div>
-
-                {/* Label */}
-                <div
-                  style={{
-                    fontFamily: 'var(--font-space-grotesk)',
-                    fontSize: 12,
-                    color: '#4a5568',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {metric.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </SectionReveal>
-
-      {/* ── FEATURES ── */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '6rem 24px' }}>
-        <SectionReveal>
-          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                fontFamily: 'var(--font-jetbrains-mono)',
-                fontSize: 11,
-                color: '#00d4ff',
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                marginBottom: 16,
-                opacity: 0.8,
-              }}
-            >
-              Protocol Features
+      {/* ── TRUST BAR — exact pattern from Zero Website ── */}
+      <section className="border-y border-border bg-white/[0.015]">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6 py-10 opacity-80 md:justify-between md:px-12">
+          <span className="label-caps text-[10px] text-text-muted">Live network visualization</span>
+          {[
+            'ML-KEM-768 hybrid KEM',
+            'Sphinx packet format',
+            'Selective mixnet',
+            'Post-quantum ready',
+          ].map((t) => (
+            <span key={t} className="label-caps text-[11px] text-text-secondary">
+              {t}
             </span>
-            <h2
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 'clamp(28px, 4vw, 42px)',
-                fontWeight: 700,
-                color: '#f0f4ff',
-                margin: '0 0 1rem',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Built for Maximum Privacy
-            </h2>
-            <p
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 16,
-                color: '#4a5568',
-                maxWidth: 540,
-                margin: '0 auto',
-                lineHeight: 1.7,
-              }}
-            >
-              Every layer of Zero Protocol is designed with privacy as a first principle,
-              not an afterthought.
-            </p>
-          </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES — exact Core Tech pattern from Zero Website ── */}
+      <section className="mx-auto max-w-[1440px] px-6 py-24 md:px-12">
+        <SectionReveal>
+          <div className="label-caps text-[10px] text-primary">Core Technologies</div>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-text-primary md:text-4xl">
+            Six defenses, layered.
+          </h2>
         </SectionReveal>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1.25rem',
-          }}
-        >
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           {FEATURES.map((feature, i) => (
             <FeatureCard
               key={feature.title}
               title={feature.title}
               description={feature.description}
-              icon={feature.icon}
-              gradient={feature.gradient}
+              tag={feature.tag}
               index={i}
             />
           ))}
         </div>
       </section>
 
-      {/* ── CTA SECTION ── */}
-      <SectionReveal>
-        <section
-          style={{
-            padding: '6rem 24px',
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Background glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 600,
-              height: 300,
-              background: 'radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
-            {/* Decorative line */}
-            <div
-              style={{
-                width: 64,
-                height: 1,
-                background: 'linear-gradient(to right, transparent, #00d4ff, transparent)',
-                margin: '0 auto 2rem',
-              }}
-            />
-
-            <h2
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 'clamp(28px, 4vw, 40px)',
-                fontWeight: 700,
-                color: '#f0f4ff',
-                margin: '0 0 1rem',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Ready to Explore the Network?
+      {/* ── CTA — exact pattern from Zero Website ── */}
+      <section className="relative overflow-hidden border-t border-border bg-surface-low/30">
+        <div aria-hidden className="radial-mint absolute inset-0" />
+        <div className="relative mx-auto max-w-[1440px] px-6 py-24 text-center md:px-12">
+          <SectionReveal>
+            <div className="label-caps text-[10px] text-primary">Explore the Network</div>
+            <h2 className="mx-auto mt-4 max-w-3xl font-display text-3xl font-semibold text-text-primary md:text-5xl">
+              Anonymity is a network effect.
+              <br />
+              <span className="text-text-muted">Be part of the noise.</span>
             </h2>
-
-            <p
-              style={{
-                fontFamily: 'var(--font-space-grotesk)',
-                fontSize: 16,
-                color: '#4a5568',
-                margin: '0 0 2.5rem',
-                lineHeight: 1.7,
-              }}
-            >
-              Dive into the live global topology, trace packet routes through the mix
-              network, and explore how privacy is preserved end-to-end.
+            <p className="mx-auto mt-6 max-w-2xl text-sm text-text-secondary">
+              Explore the live global topology, trace packet routes through the mix network,
+              and see how privacy is preserved end-to-end across every hop.
             </p>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: '1rem',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-              }}
-            >
-              <Link
-                href="/network"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '14px 36px',
-                  borderRadius: 10,
-                  border: '1px solid #00d4ff',
-                  color: '#00d4ff',
-                  background: 'rgba(0, 212, 255, 0.07)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  fontFamily: 'var(--font-space-grotesk)',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 0 24px rgba(0,212,255,0.08)',
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.background = '#00d4ff'
-                  el.style.color = '#050508'
-                  el.style.boxShadow = '0 0 48px rgba(0,212,255,0.5)'
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.background = 'rgba(0, 212, 255, 0.07)'
-                  el.style.color = '#00d4ff'
-                  el.style.boxShadow = '0 0 24px rgba(0,212,255,0.08)'
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 1.5C8 1.5 5 4.5 5 8s3 6.5 3 6.5M8 1.5C8 1.5 11 4.5 11 8s-3 6.5-3 6.5M1.5 8h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                Explore the Network
+            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/network" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                Explore Network
               </Link>
-
-              <Link
-                href="/dashboard"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '14px 36px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(124,58,237,0.45)',
-                  color: '#a78bfa',
-                  background: 'rgba(124, 58, 237, 0.07)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  fontFamily: 'var(--font-space-grotesk)',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.borderColor = 'rgba(124,58,237,0.8)'
-                  el.style.background = 'rgba(124,58,237,0.15)'
-                  el.style.boxShadow = '0 0 32px rgba(124,58,237,0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  el.style.borderColor = 'rgba(124,58,237,0.45)'
-                  el.style.background = 'rgba(124, 58, 237, 0.07)'
-                  el.style.boxShadow = 'none'
-                }}
-              >
+              <Link href="/dashboard" className="btn btn-ghost" style={{ textDecoration: 'none' }}>
                 View Dashboard
               </Link>
             </div>
-          </div>
-        </section>
-      </SectionReveal>
-
-      {/* ── FOOTER ── */}
-      <footer
-        style={{
-          borderTop: '1px solid rgba(0,212,255,0.07)',
-          padding: '2rem 24px',
-          textAlign: 'center',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono)',
-            fontSize: 11,
-            color: '#2d3748',
-            letterSpacing: '0.1em',
-            margin: 0,
-          }}
-        >
-          ZERO PROTOCOL · Next.js 15 · Three.js · Framer Motion · GSAP · Post-Quantum Ready
-        </p>
-      </footer>
-    </main>
+          </SectionReveal>
+        </div>
+      </section>
+    </>
   )
 }

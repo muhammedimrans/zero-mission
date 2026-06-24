@@ -34,9 +34,9 @@ function SceneLights() {
   return (
     <>
       <ambientLight intensity={0.2} color="#0f172a" />
-      <pointLight position={[0, 4, 4]}  intensity={2.5} color="#00d4ff" distance={20} />
-      <pointLight position={[-6, -2, 2]} intensity={1.2} color="#7c3aed" distance={15} />
-      <pointLight position={[6, 2, -2]}  intensity={1.0} color="#00ff88" distance={15} />
+      <pointLight position={[0, 4, 4]}  intensity={2.5} color="#38bdf8" distance={20} />
+      <pointLight position={[-6, -2, 2]} intensity={1.2} color="#818cf8" distance={15} />
+      <pointLight position={[6, 2, -2]}  intensity={1.0} color="#34d399" distance={15} />
     </>
   )
 }
@@ -101,7 +101,7 @@ export default function ArchitectureScene({ onHopChange }: ArchitectureSceneProp
   return (
     <>
       <SceneLights />
-      <fog attach="fog" args={['#050508', 15, 30]} />
+      <fog attach="fog" args={['#020b18', 15, 30]} />
 
       <RouteChain
         nodes={ROUTE_NODES}

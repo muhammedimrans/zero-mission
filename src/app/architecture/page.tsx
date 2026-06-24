@@ -125,7 +125,7 @@ function HeroPacket() {
         height: 8,
         borderRadius: '50%',
         background: '#ffffff',
-        boxShadow: '0 0 12px #ffffff, 0 0 24px #00d4ff',
+        boxShadow: '0 0 12px #ffffff, 0 0 24px #38bdf8',
         top: '38px',
         left: 0,
       }}
@@ -265,10 +265,10 @@ function VisualizerPanel({
         disabled={isSending}
         style={{
           background: isSending
-            ? 'rgba(0,212,255,0.05)'
-            : 'rgba(0,212,255,0.12)',
-          border: `1px solid ${isSending ? 'rgba(0,212,255,0.15)' : COLORS.neonBlue}`,
-          color: isSending ? '#4b5563' : COLORS.neonBlue,
+            ? 'rgba(56,189,248,0.05)'
+            : 'rgba(56,189,248,0.12)',
+          border: `1px solid ${isSending ? 'rgba(56,189,248,0.15)' : COLORS.neonBlue}`,
+          color: isSending ? 'var(--text-muted)' : COLORS.neonBlue,
           padding: '10px 20px',
           borderRadius: 6,
           fontFamily: 'var(--font-jetbrains-mono)',
@@ -288,7 +288,7 @@ function VisualizerPanel({
       <GlassPanel padding="14px" accentColor={COLORS.neonBlue}>
         <div
           style={{
-            color: '#4b5563',
+            color: 'var(--text-muted)',
             fontSize: 9,
             fontFamily: 'var(--font-jetbrains-mono)',
             textTransform: 'uppercase',
@@ -303,7 +303,7 @@ function VisualizerPanel({
             color: COLORS.neonBlue,
             fontSize: 28,
             fontWeight: 700,
-            fontFamily: 'var(--font-space-grotesk)',
+            fontFamily: 'var(--font-display)',
             lineHeight: 1,
             textShadow: `0 0 16px ${COLORS.neonBlue}60`,
             marginBottom: 4,
@@ -311,7 +311,7 @@ function VisualizerPanel({
         >
           {layersRemaining}
         </div>
-        <div style={{ color: '#374151', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
           layers remaining
         </div>
       </GlassPanel>
@@ -320,7 +320,7 @@ function VisualizerPanel({
       <GlassPanel padding="14px" accentColor={COLORS.guard}>
         <div
           style={{
-            color: '#4b5563',
+            color: 'var(--text-muted)',
             fontSize: 9,
             fontFamily: 'var(--font-jetbrains-mono)',
             textTransform: 'uppercase',
@@ -332,7 +332,7 @@ function VisualizerPanel({
         </div>
         <div
           style={{
-            color: currentHop >= 0 ? HOP_COLORS[currentHop] : '#374151',
+            color: currentHop >= 0 ? HOP_COLORS[currentHop] : 'var(--text-muted)',
             fontSize: 14,
             fontWeight: 600,
             fontFamily: 'var(--font-jetbrains-mono)',
@@ -341,7 +341,7 @@ function VisualizerPanel({
         >
           {currentHop >= 0 ? HOP_LABELS[currentHop] : '—'}
         </div>
-        <div style={{ color: '#374151', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
           {currentHop < 0 ? 'awaiting packet' : `hop ${currentHop + 1} of ${HOP_LABELS.length}`}
         </div>
       </GlassPanel>
@@ -350,7 +350,7 @@ function VisualizerPanel({
       <GlassPanel padding="14px" accentColor={COLORS.exit}>
         <div
           style={{
-            color: '#4b5563',
+            color: 'var(--text-muted)',
             fontSize: 9,
             fontFamily: 'var(--font-jetbrains-mono)',
             textTransform: 'uppercase',
@@ -385,7 +385,7 @@ function VisualizerPanel({
                 />
                 <span
                   style={{
-                    color: i === 0 ? HOP_COLORS[idx] : '#4b5563',
+                    color: i === 0 ? HOP_COLORS[idx] : 'var(--text-muted)',
                     fontSize: 11,
                     fontFamily: 'var(--font-jetbrains-mono)',
                   }}
@@ -421,7 +421,7 @@ export default function ArchitecturePage() {
   }, [isSending])
 
   return (
-    <main style={{ background: COLORS.bg, color: COLORS.white, overflowX: 'hidden' }}>
+    <main style={{ color: 'var(--text-primary)', overflowX: 'hidden' }}>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                   */}
@@ -433,7 +433,7 @@ export default function ArchitecturePage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '80px 24px 60px',
+          padding: '40px 24px 60px',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -449,41 +449,33 @@ export default function ArchitecturePage() {
         />
 
         {/* Module label */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          style={{
-            color: '#374151',
-            fontSize: 10,
-            fontFamily: 'var(--font-jetbrains-mono)',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            marginBottom: 20,
-          }}
+          className="label-caps text-[10px] text-primary mb-3"
         >
-          Module · 02
-        </motion.p>
+          Architecture
+        </motion.div>
 
         {/* Title */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
+          className="font-display text-[44px] md:text-[72px] font-semibold leading-[1.05] tracking-tight text-text-primary"
           style={{
-            fontSize: 'clamp(42px, 8vw, 80px)',
-            fontWeight: 700,
-            fontFamily: 'var(--font-space-grotesk)',
-            color: COLORS.neonBlue,
-            textShadow: `0 0 60px ${COLORS.neonBlue}50`,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
             margin: 0,
             marginBottom: 12,
             textAlign: 'center',
+            filter: `drop-shadow(0 0 60px ${COLORS.neonBlue}50)`,
           }}
         >
-          Architecture
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Architecture
+          </span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -492,9 +484,9 @@ export default function ArchitecturePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           style={{
-            color: '#6b7280',
+            color: 'var(--text-muted)',
             fontSize: 16,
-            fontFamily: 'var(--font-space-grotesk)',
+            fontFamily: 'var(--font-display)',
             marginBottom: 60,
             textAlign: 'center',
           }}
@@ -529,7 +521,7 @@ export default function ArchitecturePage() {
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 1.8, repeat: Infinity }}
             style={{
-              color: '#1f2937',
+              color: 'var(--border)',
               fontSize: 10,
               fontFamily: 'var(--font-jetbrains-mono)',
               letterSpacing: '0.15em',
@@ -545,9 +537,9 @@ export default function ArchitecturePage() {
       {/* SECTION 2 — HOW IT WORKS                                           */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section
+        className="border-t border-border bg-surface-low/30"
         style={{
           minHeight: '100vh',
-          background: COLORS.bgSecondary,
           padding: 'clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px)',
           display: 'flex',
           flexDirection: 'column',
@@ -557,27 +549,10 @@ export default function ArchitecturePage() {
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
           {/* Heading */}
           <div style={{ marginBottom: 60, textAlign: 'center' }}>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: 10,
-                fontFamily: 'var(--font-jetbrains-mono)',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                marginBottom: 10,
-              }}
-            >
+            <div className="label-caps text-[10px] text-primary mb-3">
               Protocol Mechanics
-            </p>
-            <h2
-              style={{
-                fontSize: 'clamp(28px, 5vw, 46px)',
-                fontWeight: 700,
-                fontFamily: 'var(--font-space-grotesk)',
-                color: COLORS.white,
-                margin: 0,
-              }}
-            >
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
               How it Works
             </h2>
           </div>
@@ -605,7 +580,7 @@ export default function ArchitecturePage() {
                       color: card.color,
                       fontSize: 32,
                       fontWeight: 700,
-                      fontFamily: 'var(--font-space-grotesk)',
+                      fontFamily: 'var(--font-display)',
                       lineHeight: 1,
                       marginBottom: 16,
                       opacity: 0.7,
@@ -617,10 +592,10 @@ export default function ArchitecturePage() {
                   {/* Title */}
                   <h3
                     style={{
-                      color: COLORS.white,
+                      color: 'var(--text-primary)',
                       fontSize: 18,
                       fontWeight: 600,
-                      fontFamily: 'var(--font-space-grotesk)',
+                      fontFamily: 'var(--font-display)',
                       marginBottom: 8,
                       margin: 0,
                     }}
@@ -631,9 +606,9 @@ export default function ArchitecturePage() {
                   {/* Description */}
                   <p
                     style={{
-                      color: '#6b7280',
+                      color: 'var(--text-secondary)',
                       fontSize: 13,
-                      fontFamily: 'var(--font-space-grotesk)',
+                      fontFamily: 'var(--font-display)',
                       marginBottom: 20,
                       lineHeight: 1.6,
                       marginTop: 8,
@@ -653,7 +628,7 @@ export default function ArchitecturePage() {
                           gap: 8,
                           fontSize: 12,
                           fontFamily: 'var(--font-jetbrains-mono)',
-                          color: '#9ca3af',
+                          color: 'var(--text-muted)',
                           lineHeight: 1.5,
                         }}
                       >
@@ -685,34 +660,17 @@ export default function ArchitecturePage() {
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
           {/* Section heading */}
           <div style={{ marginBottom: 40, textAlign: 'center' }}>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: 10,
-                fontFamily: 'var(--font-jetbrains-mono)',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                marginBottom: 10,
-              }}
-            >
+            <div className="label-caps text-[10px] text-primary mb-3">
               Interactive Demo
-            </p>
-            <h2
-              style={{
-                fontSize: 'clamp(26px, 4vw, 42px)',
-                fontWeight: 700,
-                fontFamily: 'var(--font-space-grotesk)',
-                color: COLORS.white,
-                margin: 0,
-              }}
-            >
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
               Route Visualizer
             </h2>
             <p
               style={{
-                color: '#4b5563',
+                color: 'var(--text-muted)',
                 fontSize: 13,
-                fontFamily: 'var(--font-space-grotesk)',
+                fontFamily: 'var(--font-display)',
                 marginTop: 8,
               }}
             >
@@ -737,7 +695,7 @@ export default function ArchitecturePage() {
                 height: 420,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: '1px solid rgba(0,212,255,0.1)',
+                border: '1px solid rgba(139,148,158,0.18)',
                 background: COLORS.bg,
               }}
             >
@@ -767,8 +725,8 @@ export default function ArchitecturePage() {
       {/* SECTION 4 — PROPERTIES                                             */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section
+        className="border-t border-border bg-surface-low/30"
         style={{
-          background: COLORS.bgSecondary,
           padding: 'clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px)',
           minHeight: '100vh',
           display: 'flex',
@@ -779,27 +737,10 @@ export default function ArchitecturePage() {
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
           {/* Heading */}
           <div style={{ marginBottom: 60, textAlign: 'center' }}>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: 10,
-                fontFamily: 'var(--font-jetbrains-mono)',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                marginBottom: 10,
-              }}
-            >
+            <div className="label-caps text-[10px] text-primary mb-3">
               Security Properties
-            </p>
-            <h2
-              style={{
-                fontSize: 'clamp(28px, 5vw, 46px)',
-                fontWeight: 700,
-                fontFamily: 'var(--font-space-grotesk)',
-                color: COLORS.white,
-                margin: 0,
-              }}
-            >
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
               What Zero Protocol Guarantees
             </h2>
           </div>
@@ -845,8 +786,8 @@ export default function ArchitecturePage() {
                     style={{
                       color: prop.color,
                       fontSize: 17,
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-space-grotesk)',
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-display)',
                       margin: '0 0 4px 0',
                     }}
                   >
@@ -856,7 +797,7 @@ export default function ArchitecturePage() {
                   {/* Subtitle */}
                   <p
                     style={{
-                      color: '#4b5563',
+                      color: 'var(--text-muted)',
                       fontSize: 11,
                       fontFamily: 'var(--font-jetbrains-mono)',
                       margin: '0 0 14px 0',
@@ -870,9 +811,9 @@ export default function ArchitecturePage() {
                   {/* Description */}
                   <p
                     style={{
-                      color: '#9ca3af',
+                      color: 'var(--text-muted)',
                       fontSize: 13,
-                      fontFamily: 'var(--font-space-grotesk)',
+                      fontFamily: 'var(--font-display)',
                       lineHeight: 1.65,
                       margin: 0,
                     }}
@@ -890,8 +831,8 @@ export default function ArchitecturePage() {
       <div
         style={{
           padding: '20px 40px',
-          borderTop: '1px solid rgba(0,212,255,0.06)',
-          color: '#1f2937',
+          borderTop: '1px solid rgba(139,148,158,0.18)',
+          color: 'var(--border)',
           fontSize: 9,
           fontFamily: 'var(--font-jetbrains-mono)',
           letterSpacing: '0.1em',
