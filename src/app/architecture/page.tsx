@@ -1,887 +1,217 @@
 'use client'
-
-import { Suspense, useState, useCallback, useRef, useEffect } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
+import Section3DLayout from '@/components/zp/Section3DLayout'
+import { InfoSection, KV, StepList, Pill, Divider } from '@/components/zp/InfoBlocks'
 import { COLORS } from '@/lib/constants'
-import GlassPanel from '@/components/ui/GlassPanel'
 
 const ArchitectureScene = dynamic(
   () => import('@/components/three/ArchitectureScene'),
   { ssr: false }
 )
 
-// ── Hero animated chain diagram (pure CSS/HTML) ───────────────────────────────
-
-interface HeroChainNode {
-  label: string
-  color: string
-  delay: number
-}
-
-const HERO_NODES: HeroChainNode[] = [
-  { label: 'Client',  color: COLORS.client, delay: 0 },
-  { label: 'Guard',   color: COLORS.guard,  delay: 0.15 },
-  { label: 'Mix 1',   color: COLORS.mix,    delay: 0.3 },
-  { label: 'Mix 2',   color: COLORS.mix,    delay: 0.45 },
-  { label: 'Exit',    color: COLORS.exit,   delay: 0.6 },
-  { label: 'Dest',    color: '#f0f4ff',     delay: 0.75 },
+/* ── Hop info ───────────────────────────────────────────── */
+const HOP_INFO = [
+  { label: 'Client',  color: COLORS.client, desc: 'Wraps all 4 Sphinx layers. Knows the full circuit but never reveals it.' },
+  { label: 'Guard',   color: COLORS.guard,  desc: 'First node. Sees the origin IP but only knows the next hop (Mix 1).' },
+  { label: 'Mix 1',   color: COLORS.mix,    desc: 'Middle relay. Strips one layer, forwards to Mix 2. No metadata retained.' },
+  { label: 'Mix 2',   color: COLORS.mix,    desc: 'Second relay. Applies blinding factor, forwards to Exit.' },
+  { label: 'Exit',    color: COLORS.exit,   desc: 'Final relay. Decrypts last layer, delivers payload to destination.' },
 ]
 
-function HeroChain() {
-  return (
-    <>
-      <style>{`
-        @keyframes flow-right {
-          0%   { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-        @keyframes node-pulse {
-          0%, 100% { box-shadow: var(--pulse-shadow-lo); }
-          50%       { box-shadow: var(--pulse-shadow-hi); }
-        }
-      `}</style>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        {HERO_NODES.map((node, i) => (
-          <div key={node.label} style={{ display: 'flex', alignItems: 'center' }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.3 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: node.delay, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
-            >
-              {/* Node circle with continuous pulse */}
-              <motion.div
-                style={{
-                  '--pulse-shadow-lo': `0 0 8px ${node.color}55`,
-                  '--pulse-shadow-hi': `0 0 24px ${node.color}, 0 0 44px ${node.color}55`,
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  background: `${node.color}18`,
-                  border: `2px solid ${node.color}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  animation: `node-pulse 2.2s ease-in-out ${node.delay}s infinite`,
-                } as React.CSSProperties}
-              >
-                <motion.div
-                  animate={{ scale: [0.85, 1, 0.85] }}
-                  transition={{ duration: 2.2, repeat: Infinity, delay: node.delay }}
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: '50%',
-                    background: node.color,
-                    boxShadow: `0 0 10px ${node.color}`,
-                  }}
-                />
-              </motion.div>
-              <span
-                style={{
-                  color: node.color,
-                  fontSize: 9,
-                  fontFamily: 'var(--font-jetbrains-mono)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  opacity: 0.9,
-                }}
-              >
-                {node.label}
-              </span>
-            </motion.div>
-
-            {/* Flow connector with animated highlight */}
-            {i < HERO_NODES.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0, scaleX: 0 }}
-                animate={{ opacity: 1, scaleX: 1 }}
-                transition={{ delay: node.delay + 0.12, duration: 0.35, ease: 'easeOut' }}
-                style={{
-                  width: 34,
-                  height: 2,
-                  background: `linear-gradient(90deg, ${node.color}50, ${HERO_NODES[i + 1].color}50)`,
-                  position: 'relative',
-                  marginBottom: 22,
-                  transformOrigin: 'left center',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Flowing light streak */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: `linear-gradient(90deg, transparent, ${node.color}, transparent)`,
-                    width: '50%',
-                    animation: `flow-right ${1.4 + i * 0.12}s linear ${node.delay + 0.4}s infinite`,
-                  }}
-                />
-              </motion.div>
-            )}
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
-// ── Moving packet across hero chain ──────────────────────────────────────────
-
-function HeroPacket() {
-  return (
-    <>
-      {/* Ghost trail — 0.45s behind */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: COLORS.primary,
-          boxShadow: `0 0 10px ${COLORS.primary}80`,
-          top: '40px',
-          left: 0,
-          opacity: 0.45,
-        }}
-        animate={{ left: ['0%', '95%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear', delay: 0.45 }}
-      />
-      {/* Main packet */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          width: 9,
-          height: 9,
-          borderRadius: '50%',
-          background: '#ffffff',
-          boxShadow: `0 0 14px #ffffff, 0 0 28px ${COLORS.primary}`,
-          top: '38px',
-          left: 0,
-        }}
-        animate={{ left: ['0%', '95%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-      />
-    </>
-  )
-}
-
-// ── Section 2: How it works cards ─────────────────────────────────────────────
-
-interface HowItWorksCard {
-  number: string
-  title: string
-  description: string
-  color: string
-  items: string[]
-}
-
-const HOW_IT_WORKS: HowItWorksCard[] = [
-  {
-    number: '01',
-    title: 'Build a Circuit',
-    description: 'Client selects 3+ nodes and establishes shared keys.',
-    color: COLORS.guard,
-    items: [
-      'Client discovers available nodes',
-      'Selects Guard → Mix → Exit path',
-      'Performs Diffie–Hellman with each',
-      'Circuit ID established per hop',
-    ],
-  },
-  {
-    number: '02',
-    title: 'Wrap the Packet',
-    description: 'Sphinx format: nested encryption layers — outermost first.',
-    color: COLORS.mix,
-    items: [
-      'Encrypt for Exit (innermost)',
-      'Encrypt for Mix node',
-      'Encrypt for Guard (outermost)',
-      'Each layer hides the next hop',
-    ],
-  },
-  {
-    number: '03',
-    title: 'Route & Strip',
-    description: 'Each hop decrypts one layer, then forwards the remainder.',
-    color: COLORS.exit,
-    items: [
-      'Guard strips outer layer → Guard sees Mix',
-      'Mix strips next layer → Mix sees Exit',
-      'Exit strips last layer → delivers payload',
-      'No single node knows full path',
-    ],
-  },
-]
-
-// ── Section 4: Properties cards ───────────────────────────────────────────────
-
-interface PropertyCard {
-  title: string
-  subtitle: string
-  description: string
-  color: string
-  icon: string
-}
-
-const PROPERTIES: PropertyCard[] = [
-  {
-    title: 'Forward Secrecy',
-    subtitle: 'Ephemeral keys per circuit',
-    description:
-      'Each circuit uses fresh Diffie–Hellman keys. Compromise of long-term keys cannot decrypt past sessions.',
-    color: COLORS.neonBlue,
-    icon: '🔑',
-  },
-  {
-    title: 'Unlinkability',
-    subtitle: 'Guard ≠ Destination',
-    description:
-      'Guard nodes see origin but not destination. Exit nodes see destination but not origin. No single node links sender to receiver.',
-    color: COLORS.mix,
-    icon: '⛓️',
-  },
-  {
-    title: 'Traffic Shaping',
-    subtitle: 'Constant-rate emission',
-    description:
-      'Nodes emit cover traffic at a constant rate. Timing analysis and traffic correlation attacks are defeated.',
-    color: COLORS.exit,
-    icon: '〜',
-  },
-  {
-    title: 'Route Blinding',
-    subtitle: 'SURB mechanism',
-    description:
-      'Single-Use Reply Blocks allow replies without the responder knowing the requester\'s address or route.',
-    color: COLORS.purple,
-    icon: '◎',
-  },
-]
-
-// ── Route visualizer panel (right side) ──────────────────────────────────────
-
-const HOP_LABELS = ['Client', 'Guard', 'Mix 1', 'Mix 2', 'Exit']
-const HOP_COLORS = [COLORS.client, COLORS.guard, COLORS.mix, COLORS.mix, COLORS.exit]
-
-function VisualizerPanel({
-  currentHop,
-  layersRemaining,
-  onSend,
-  isSending,
+/* ── Live hop-change callback scene wrapper ─────────────── */
+function LiveArchScene({
+  onHopChange,
 }: {
-  currentHop: number
-  layersRemaining: number
-  onSend: () => void
-  isSending: boolean
+  onHopChange: (hop: number, layers: number) => void
 }) {
-  const remainingNodes = currentHop >= 0
-    ? HOP_LABELS.slice(currentHop)
-    : HOP_LABELS
-
   return (
-    <div
-      style={{
-        width: 240,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-        flexShrink: 0,
-      }}
-    >
-      {/* Send button */}
-      <button
-        onClick={onSend}
-        disabled={isSending}
-        style={{
-          background: isSending
-            ? 'rgba(56,189,248,0.05)'
-            : 'rgba(56,189,248,0.12)',
-          border: `1px solid ${isSending ? 'rgba(56,189,248,0.15)' : COLORS.neonBlue}`,
-          color: isSending ? 'var(--text-muted)' : COLORS.neonBlue,
-          padding: '10px 20px',
-          borderRadius: 6,
-          fontFamily: 'var(--font-jetbrains-mono)',
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: isSending ? 'not-allowed' : 'pointer',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          transition: 'all 0.2s',
-          textShadow: isSending ? 'none' : `0 0 12px ${COLORS.neonBlue}80`,
-        }}
-      >
-        {isSending ? 'Routing...' : 'Send Packet'}
-      </button>
-
-      {/* Current layer */}
-      <GlassPanel padding="14px" accentColor={COLORS.neonBlue}>
-        <div
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: 9,
-            fontFamily: 'var(--font-jetbrains-mono)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            marginBottom: 8,
-          }}
-        >
-          Encryption Layers
-        </div>
-        <div
-          style={{
-            color: COLORS.neonBlue,
-            fontSize: 28,
-            fontWeight: 700,
-            fontFamily: 'var(--font-display)',
-            lineHeight: 1,
-            textShadow: `0 0 16px ${COLORS.neonBlue}60`,
-            marginBottom: 4,
-          }}
-        >
-          {layersRemaining}
-        </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
-          layers remaining
-        </div>
-      </GlassPanel>
-
-      {/* Current hop */}
-      <GlassPanel padding="14px" accentColor={COLORS.guard}>
-        <div
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: 9,
-            fontFamily: 'var(--font-jetbrains-mono)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            marginBottom: 8,
-          }}
-        >
-          Current Hop
-        </div>
-        <div
-          style={{
-            color: currentHop >= 0 ? HOP_COLORS[currentHop] : 'var(--text-muted)',
-            fontSize: 14,
-            fontWeight: 600,
-            fontFamily: 'var(--font-jetbrains-mono)',
-            marginBottom: 2,
-          }}
-        >
-          {currentHop >= 0 ? HOP_LABELS[currentHop] : '—'}
-        </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-jetbrains-mono)' }}>
-          {currentHop < 0 ? 'awaiting packet' : `hop ${currentHop + 1} of ${HOP_LABELS.length}`}
-        </div>
-      </GlassPanel>
-
-      {/* Remaining path */}
-      <GlassPanel padding="14px" accentColor={COLORS.exit}>
-        <div
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: 9,
-            fontFamily: 'var(--font-jetbrains-mono)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            marginBottom: 10,
-          }}
-        >
-          Remaining Path
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {remainingNodes.map((label, i) => {
-            const idx = HOP_LABELS.indexOf(label)
-            return (
-              <div
-                key={label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  opacity: i === 0 ? 1 : 0.5,
-                }}
-              >
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: HOP_COLORS[idx] ?? '#ffffff',
-                    boxShadow: i === 0 ? `0 0 8px ${HOP_COLORS[idx]}` : 'none',
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    color: i === 0 ? HOP_COLORS[idx] : 'var(--text-muted)',
-                    fontSize: 11,
-                    fontFamily: 'var(--font-jetbrains-mono)',
-                  }}
-                >
-                  {label}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </GlassPanel>
-    </div>
+    <>
+      <ArchitectureScene onHopChange={onHopChange} />
+    </>
   )
 }
 
-// ── Main architecture page ────────────────────────────────────────────────────
+/* ── Route step pills ───────────────────────────────────── */
+const ROUTE_STEPS = [
+  { label: 'Client',  color: COLORS.client,  role: 'client' as const },
+  { label: 'Guard',   color: COLORS.guard,   role: 'guard'  as const },
+  { label: 'Mix 1',   color: COLORS.mix,     role: 'mix'    as const },
+  { label: 'Mix 2',   color: COLORS.mix,     role: 'mix'    as const },
+  { label: 'Exit',    color: COLORS.exit,    role: 'exit'   as const },
+]
 
+/* ── Page ───────────────────────────────────────────────── */
 export default function ArchitecturePage() {
-  const [currentHop, setCurrentHop] = useState(-1)
-  const [layersRemaining, setLayersRemaining] = useState(4)
-  const [isSending, setIsSending] = useState(false)
+  const [hop, setHop] = useState(0)
+  const [layers, setLayers] = useState(4)
 
-  const handleHopChange = useCallback((hop: number, layers: number) => {
-    setCurrentHop(hop)
-    setLayersRemaining(layers)
-    if (hop === -1) setIsSending(false)
+  const handleHopChange = useCallback((h: number, l: number) => {
+    setHop(h)
+    setLayers(l)
   }, [])
 
-  const handleSendPacket = useCallback(() => {
-    if (isSending) return
-    setIsSending(true)
-    ;(window as Window & { __archSendPacket?: () => void }).__archSendPacket?.()
-  }, [isSending])
+  const hopInfo = HOP_INFO[hop] ?? HOP_INFO[0]
 
-  return (
-    <main style={{ color: 'var(--text-primary)', overflowX: 'hidden' }}>
-
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 1 — HERO                                                   */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <section
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 24px 60px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Background radial glow */}
+  const info = (
+    <>
+      {/* Live Hop Status */}
+      <InfoSection label="Live — Active Hop" title={hopInfo.label}>
         <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `radial-gradient(ellipse 80% 50% at 50% 50%, ${COLORS.neonBlue}08 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Module label */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="label-caps text-[10px] text-primary mb-3"
-        >
-          Architecture
-        </motion.div>
-
-        {/* Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="font-display text-[44px] md:text-[72px] font-semibold leading-[1.05] tracking-tight text-text-primary"
-          style={{
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            margin: 0,
-            marginBottom: 12,
-            textAlign: 'center',
-            filter: `drop-shadow(0 0 60px ${COLORS.neonBlue}50)`,
-          }}
-        >
-          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Architecture
-          </span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: 16,
-            fontFamily: 'var(--font-display)',
-            marginBottom: 60,
-            textAlign: 'center',
-          }}
-        >
-          Multi-Layer Encrypted Routing
-        </motion.p>
-
-        {/* Animated diagram */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          style={{ position: 'relative', width: '100%', maxWidth: 680 }}
-        >
-          <HeroChain />
-          <HeroPacket />
-        </motion.div>
-
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.6 }}
-          style={{
-            position: 'absolute',
-            bottom: 32,
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
+          className="mb-3 flex h-1 w-full rounded-full overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.08)' }}
         >
           <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity }}
-            style={{
-              color: 'var(--border)',
-              fontSize: 10,
-              fontFamily: 'var(--font-jetbrains-mono)',
-              letterSpacing: '0.15em',
-              textAlign: 'center',
-            }}
-          >
-            SCROLL ↓
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 2 — HOW IT WORKS                                           */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <section
-        className="border-t border-border bg-surface-low/30"
-        style={{
-          minHeight: '100vh',
-          padding: 'clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          {/* Heading */}
-          <div style={{ marginBottom: 60, textAlign: 'center' }}>
-            <div className="label-caps text-[10px] text-primary mb-3">
-              Protocol Mechanics
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
-              How it Works
-            </h2>
-          </div>
-
-          {/* Cards grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 24,
-            }}
-          >
-            {HOW_IT_WORKS.map((card) => (
-              <motion.div
-                key={card.number}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.6 }}
-              >
-                <GlassPanel padding="28px" accentColor={card.color}>
-                  {/* Number */}
-                  <div
-                    style={{
-                      color: card.color,
-                      fontSize: 32,
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-display)',
-                      lineHeight: 1,
-                      marginBottom: 16,
-                      opacity: 0.7,
-                    }}
-                  >
-                    {card.number}
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    style={{
-                      color: 'var(--text-primary)',
-                      fontSize: 18,
-                      fontWeight: 600,
-                      fontFamily: 'var(--font-display)',
-                      marginBottom: 8,
-                      margin: 0,
-                    }}
-                  >
-                    {card.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p
-                    style={{
-                      color: 'var(--text-secondary)',
-                      fontSize: 13,
-                      fontFamily: 'var(--font-display)',
-                      marginBottom: 20,
-                      lineHeight: 1.6,
-                      marginTop: 8,
-                    }}
-                  >
-                    {card.description}
-                  </p>
-
-                  {/* Items */}
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {card.items.map((item) => (
-                      <li
-                        key={item}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                          fontSize: 12,
-                          fontFamily: 'var(--font-jetbrains-mono)',
-                          color: 'var(--text-muted)',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <span style={{ color: card.color, flexShrink: 0, marginTop: 2 }}>›</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </GlassPanel>
-              </motion.div>
-            ))}
-          </div>
+            className="h-full rounded-full"
+            style={{ background: hopInfo.color }}
+            animate={{ width: `${((hop + 1) / 5) * 100}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
         </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 3 — INTERACTIVE ROUTE VISUALIZER                           */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <section
-        style={{
-          minHeight: '100vh',
-          background: COLORS.bg,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: 'clamp(60px, 8vw, 100px) clamp(20px, 5vw, 60px)',
-        }}
-      >
-        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-          {/* Section heading */}
-          <div style={{ marginBottom: 40, textAlign: 'center' }}>
-            <div className="label-caps text-[10px] text-primary mb-3">
-              Interactive Demo
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
-              Route Visualizer
-            </h2>
-            <p
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          {hopInfo.desc}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {ROUTE_STEPS.map((s, i) => (
+            <span
+              key={i}
+              className="rounded-full px-2 py-0.5 text-[10px] font-medium border"
               style={{
-                color: 'var(--text-muted)',
-                fontSize: 13,
-                fontFamily: 'var(--font-display)',
-                marginTop: 8,
+                borderColor: i === hop ? s.color : 'rgba(255,255,255,0.1)',
+                color: i === hop ? s.color : 'var(--text-muted)',
+                background: i === hop ? `${s.color}12` : 'transparent',
+                fontFamily: 'var(--font-mono)',
+                transition: 'all 0.3s',
               }}
             >
-              Watch Sphinx packet routing in real-time
-            </p>
-          </div>
-
-          {/* Canvas + side panel */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 24,
-              alignItems: 'flex-start',
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* 3D canvas */}
-            <div
-              style={{
-                flex: 1,
-                minWidth: 300,
-                height: 420,
-                borderRadius: 12,
-                overflow: 'hidden',
-                border: '1px solid rgba(139,148,158,0.18)',
-                background: COLORS.bg,
-              }}
-            >
-              <Canvas
-                camera={{ position: [0, 2, 9], fov: 55, near: 0.1, far: 60 }}
-                gl={{ antialias: true, alpha: false }}
-                dpr={[1, 2]}
-              >
-                <Suspense fallback={null}>
-                  <ArchitectureScene onHopChange={handleHopChange} />
-                </Suspense>
-              </Canvas>
-            </div>
-
-            {/* Side panel */}
-            <VisualizerPanel
-              currentHop={currentHop}
-              layersRemaining={layersRemaining}
-              onSend={handleSendPacket}
-              isSending={isSending}
-            />
-          </div>
+              {s.label}
+            </span>
+          ))}
         </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 4 — PROPERTIES                                             */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <section
-        className="border-t border-border bg-surface-low/30"
-        style={{
-          padding: 'clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px)',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          {/* Heading */}
-          <div style={{ marginBottom: 60, textAlign: 'center' }}>
-            <div className="label-caps text-[10px] text-primary mb-3">
-              Security Properties
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-primary" style={{ margin: 0 }}>
-              What Zero Protocol Guarantees
-            </h2>
-          </div>
-
-          {/* 2×2 grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 24,
-            }}
-          >
-            {PROPERTIES.map((prop) => (
-              <motion.div
-                key={prop.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.55 }}
-                whileHover={{ scale: 1.02 }}
-              >
-                <GlassPanel padding="28px" accentColor={prop.color} style={{ height: '100%' }}>
-                  {/* Icon */}
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 10,
-                      background: `${prop.color}18`,
-                      border: `1px solid ${prop.color}35`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 20,
-                      marginBottom: 16,
-                    }}
-                  >
-                    {prop.icon}
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    style={{
-                      color: prop.color,
-                      fontSize: 17,
-                      fontWeight: 600,
-                      fontFamily: 'var(--font-display)',
-                      margin: '0 0 4px 0',
-                    }}
-                  >
-                    {prop.title}
-                  </h3>
-
-                  {/* Subtitle */}
-                  <p
-                    style={{
-                      color: 'var(--text-muted)',
-                      fontSize: 11,
-                      fontFamily: 'var(--font-jetbrains-mono)',
-                      margin: '0 0 14px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {prop.subtitle}
-                  </p>
-
-                  {/* Description */}
-                  <p
-                    style={{
-                      color: 'var(--text-muted)',
-                      fontSize: 13,
-                      fontFamily: 'var(--font-display)',
-                      lineHeight: 1.65,
-                      margin: 0,
-                    }}
-                  >
-                    {prop.description}
-                  </p>
-                </GlassPanel>
-              </motion.div>
-            ))}
-          </div>
+        <div className="mt-2">
+          <KV pairs={[
+            { k: 'Current hop',    v: `${hop + 1} / 5` },
+            { k: 'Layers remaining', v: String(layers) },
+          ]} />
         </div>
-      </section>
+      </InfoSection>
 
-      {/* Footer strip */}
-      <div
-        style={{
-          padding: '20px 40px',
-          borderTop: '1px solid rgba(139,148,158,0.18)',
-          color: 'var(--border)',
-          fontSize: 9,
-          fontFamily: 'var(--font-jetbrains-mono)',
-          letterSpacing: '0.1em',
-          textAlign: 'center',
-        }}
-      >
-        ZERO PROTOCOL · ARCHITECTURE MODULE
-      </div>
-    </main>
+      <Divider />
+
+      {/* How it works */}
+      <InfoSection label="Protocol Overview" title="How Routing Works">
+        <StepList
+          steps={[
+            {
+              title: 'Circuit Construction',
+              description: 'Client performs ECDH with each of 4 relay nodes, deriving per-hop shared secrets — no secrets sent over the wire.',
+            },
+            {
+              title: 'Onion Wrapping',
+              description: 'Sphinx packet is layered innermost-first: payload → Exit encryption → Mix₂ → Mix₁ → Guard wrapper.',
+            },
+            {
+              title: 'Layer Stripping',
+              description: 'Each relay strips exactly one layer, reads only its next-hop address, and forwards the remainder.',
+            },
+            {
+              title: 'Delivery',
+              description: 'Exit node strips the final layer and delivers plaintext to the destination. No single node knows the full path.',
+            },
+          ]}
+        />
+      </InfoSection>
+
+      <Divider />
+
+      {/* Sphinx packet specs */}
+      <InfoSection label="Sphinx V1" title="Packet Format">
+        <KV
+          pairs={[
+            { k: 'HEADER_LEN', v: '576 B' },
+            { k: 'α (DH key)', v: '32 B — Curve25519' },
+            { k: 'γ (MAC)',    v: '32 B — BLAKE2b-256' },
+            { k: 'β (routing)',v: '512 B — encrypted routing' },
+            { k: 'Payload',   v: '1 024 B' },
+            { k: 'SPHINX_LEN',v: '1 600 B' },
+            { k: 'MAX_HOPS',  v: '4' },
+          ]}
+        />
+      </InfoSection>
+
+      <Divider />
+
+      {/* Properties */}
+      <InfoSection title="Security Properties">
+        <div className="space-y-3">
+          {[
+            { title: 'Forward Secrecy',    desc: 'Ephemeral keys per circuit. Past sessions can\'t be decrypted even if long-term keys are compromised.', color: COLORS.neonBlue },
+            { title: 'Unlinkability',       desc: 'Guard sees origin but not destination. Exit sees destination but not origin.', color: COLORS.mix },
+            { title: 'Traffic Shaping',     desc: 'Constant-rate cover traffic defeats timing analysis and traffic correlation.', color: COLORS.green },
+            { title: 'Replay Protection',  desc: '65 536-entry Bloom filter at each relay. Duplicate packets silently dropped.', color: COLORS.primary },
+          ].map(p => (
+            <div key={p.title}>
+              <div
+                className="text-xs font-medium"
+                style={{ color: p.color }}
+              >
+                {p.title}
+              </div>
+              <div
+                className="text-xs leading-relaxed"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {p.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </InfoSection>
+
+      <Divider />
+
+      <InfoSection title="Privacy Levels">
+        <div className="flex flex-wrap gap-2">
+          <Pill variant="warn">L1 · Raw</Pill>
+          <Pill variant="guard">L2 · Obfs4</Pill>
+          <Pill variant="primary">L3 · Default</Pill>
+          <Pill variant="mix">L4 · Max Stealth</Pill>
+        </div>
+      </InfoSection>
+    </>
   )
+
+  const controls = (
+    <button
+      className="btn btn-ghost text-xs"
+      onClick={() => {
+        if (typeof window !== 'undefined' && window.__archSendPacket) {
+          window.__archSendPacket()
+        }
+      }}
+    >
+      ▶ Send Packet
+    </button>
+  )
+
+  return (
+    <Section3DLayout
+      tagline="Zero Protocol · Routing Layer"
+      title="Network Architecture"
+      intro="An interactive view of Zero Protocol's 4-hop onion routing. Each node strips one encryption layer before forwarding."
+      scene={<LiveArchScene onHopChange={handleHopChange} />}
+      cameraPosition={[0, 2, 9]}
+      cameraFov={50}
+      info={info}
+      controls={controls}
+    />
+  )
+}
+
+/* ── Global window type extension ───────────────────────── */
+declare global {
+  interface Window {
+    __archSendPacket?: () => void
+  }
 }
