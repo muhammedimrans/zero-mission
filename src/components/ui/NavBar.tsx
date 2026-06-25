@@ -6,13 +6,19 @@ import { useState, useEffect } from 'react'
 import LogoMark from '@/components/ui/LogoMark'
 
 const NAV = [
-  { href: '/network',         label: 'Network' },
-  { href: '/architecture',    label: 'Architecture' },
-  { href: '/sphinx',          label: 'Sphinx' },
-  { href: '/hidden-services', label: 'Hidden Services' },
-  { href: '/cryptography',    label: 'Crypto' },
-  { href: '/dashboard',       label: 'Dashboard' },
-  { href: '/roadmap',         label: 'Roadmap' },
+  { href: '/network',          label: 'Network' },
+  { href: '/architecture',     label: 'Architecture' },
+  { href: '/sphinx',           label: 'Sphinx' },
+  { href: '/circuit-builder',  label: 'Circuits' },
+  { href: '/packet-explorer',  label: 'Packets' },
+  { href: '/network-flow',     label: 'Flow' },
+  { href: '/node-discovery',   label: 'Nodes' },
+  { href: '/daemon-startup',   label: 'Daemon' },
+  { href: '/cryptography',     label: 'Crypto' },
+  { href: '/crypto-encrypt',   label: 'Encrypt' },
+  { href: '/hidden-services',  label: 'Hidden Svc' },
+  { href: '/dashboard',        label: 'Dashboard' },
+  { href: '/roadmap',          label: 'Roadmap' },
 ] as const
 
 function NavItem({ href, label }: { href: string; label: string }) {
@@ -23,8 +29,8 @@ function NavItem({ href, label }: { href: string; label: string }) {
       href={href}
       className={
         isActive
-          ? 'text-[13px] font-medium text-primary'
-          : 'text-[13px] font-medium text-text-secondary transition-colors hover:text-primary'
+          ? 'text-[12px] font-medium text-primary'
+          : 'text-[12px] font-medium text-text-secondary transition-colors hover:text-primary'
       }
     >
       {label}
@@ -61,7 +67,7 @@ export default function NavBar() {
         </Link>
 
         {/* Desktop nav */}
-        <nav aria-label="Primary" className="hidden items-center gap-6 md:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-3 xl:flex">
           {NAV.map((n) => (
             <NavItem key={n.href} {...n} />
           ))}
@@ -80,7 +86,7 @@ export default function NavBar() {
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-text-secondary md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-text-secondary xl:hidden"
           >
             <span aria-hidden>{open ? '✕' : '☰'}</span>
           </button>
@@ -91,7 +97,7 @@ export default function NavBar() {
       {open && (
         <nav
           aria-label="Mobile"
-          className="border-t border-border bg-background/95 px-6 py-4 md:hidden"
+          className="border-t border-border bg-background/95 px-6 py-4 xl:hidden"
         >
           <ul className="flex flex-col gap-3">
             {NAV.map((n) => (

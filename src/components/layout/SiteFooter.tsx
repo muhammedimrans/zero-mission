@@ -10,6 +10,17 @@ const cols: { title: string; links: [string, string][] }[] = [
       ['/network',         'Network'],
       ['/hidden-services', 'Hidden Services'],
       ['/cryptography',    'Cryptography'],
+      ['/crypto-encrypt',  'Encryption Pipeline'],
+    ],
+  },
+  {
+    title: 'Interactive 3D',
+    links: [
+      ['/circuit-builder',  'Circuit Builder'],
+      ['/packet-explorer',  'Packet Explorer'],
+      ['/network-flow',     'Network Flow'],
+      ['/node-discovery',   'Node Discovery'],
+      ['/daemon-startup',   'Daemon Startup'],
     ],
   },
   {
@@ -33,7 +44,7 @@ const cols: { title: string; links: [string, string][] }[] = [
 export default function SiteFooter() {
   return (
     <footer className="border-t border-border bg-surface-low/40">
-      <div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-14 md:grid-cols-5 md:px-12">
+      <div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-14 md:grid-cols-6 md:px-12">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5">
             <LogoMark />
