@@ -200,7 +200,7 @@ export default function CryptographyPage() {
     <div className="min-h-screen">
       {/* ── Hero ── */}
       <section className="border-b border-border bg-surface-low/20">
-        <div className="mx-auto max-w-[1440px] px-6 py-16 md:px-12">
+        <div className="mx-auto max-w-[1440px] px-6 py-10 md:px-12">
           <SectionReveal>
             <div className="label-caps text-[10px] text-primary">Cryptographic Stack</div>
             <h1 className="mt-3 font-display text-4xl font-semibold text-text-primary md:text-5xl">
@@ -223,7 +223,7 @@ export default function CryptographyPage() {
       </section>
 
       {/* ── Primitive Cards ── */}
-      <section className="mx-auto max-w-[1440px] px-6 py-16 md:px-12">
+      <section className="mx-auto max-w-[1440px] px-6 py-10 md:px-12">
         <SectionReveal>
           <div className="label-caps text-[10px] text-primary">Primitives</div>
           <h2 className="mt-2 font-display text-2xl font-semibold text-text-primary">Nine primitives, zero choices left to chance.</h2>

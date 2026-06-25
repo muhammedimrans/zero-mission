@@ -6,14 +6,13 @@ import { useState, useEffect } from 'react'
 import LogoMark from '@/components/ui/LogoMark'
 
 const NAV = [
-  { href: '/network',          label: 'Network' },
-  { href: '/architecture',     label: 'Architecture' },
-  { href: '/sphinx',           label: 'Sphinx' },
-  { href: '/hidden-services',  label: 'Hidden Services' },
-  { href: '/cryptography',     label: 'Cryptography' },
-  { href: '/threat-simulator', label: 'Threat Simulator' },
-  { href: '/dashboard',        label: 'Dashboard' },
-  { href: '/roadmap',          label: 'Roadmap' },
+  { href: '/network',         label: 'Network' },
+  { href: '/architecture',    label: 'Architecture' },
+  { href: '/sphinx',          label: 'Sphinx' },
+  { href: '/hidden-services', label: 'Hidden Services' },
+  { href: '/cryptography',    label: 'Crypto' },
+  { href: '/dashboard',       label: 'Dashboard' },
+  { href: '/roadmap',         label: 'Roadmap' },
 ] as const
 
 function NavItem({ href, label }: { href: string; label: string }) {

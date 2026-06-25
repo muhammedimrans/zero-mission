@@ -355,9 +355,10 @@ export default function DashboardPage() {
       <div className="sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
         style={{ background: 'rgba(8,9,10,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(139,148,158,0.18)' }}>
         <div className="flex items-center gap-3">
-          <h1 className="text-sm sm:text-base font-bold uppercase tracking-widest"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'var(--primary)', textShadow: '0 0 20px rgba(110,255,199,0.4)' }}>
-            Zero Protocol — Operations Center
+          <h1 className="text-sm sm:text-base font-bold uppercase tracking-widest truncate"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'var(--primary)', textShadow: '0 0 20px rgba(110,255,199,0.4)', maxWidth: 'min(260px, 40vw)' }}>
+            <span className="hidden sm:inline">Zero Protocol — Operations Center</span>
+            <span className="sm:hidden">ZeroProtocol</span>
           </h1>
           <LiveBadge />
           <span className="hidden sm:inline label-caps text-[9px] text-text-muted border border-border px-2 py-0.5 rounded">
@@ -373,58 +374,40 @@ export default function DashboardPage() {
         <motion.div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}
           variants={containerVariants} initial="hidden" animate="visible">
 
-          {/* ── Row 1: Core metrics (6 cards) ── */}
+          {/* ── Row 1: Core metrics (4 hero cards) ── */}
 
           {/* Network Health */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-5" style={CARD_STYLE}>
             <CardLabel>Network Health</CardLabel>
-            <p className="text-3xl font-bold" style={{ color: '#34d399', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #34d39955' }}>98.7%</p>
+            <p className="text-4xl font-bold mt-1" style={{ color: '#34d399', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 24px #34d39966' }}>98.7%</p>
             <GaugeArc percent={98.7} />
           </motion.div>
 
           {/* Active Circuits */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-5 flex flex-col gap-1" style={CARD_STYLE}>
             <CardLabel>Active Circuits</CardLabel>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px rgba(110,255,199,0.3)' }}>
+            <p className="text-4xl font-bold tabular-nums mt-1" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 24px rgba(110,255,199,0.4)' }}>
               {fmt(activeCircuits)}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>L3: 3 parallel circuits/client</p>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>L3: 3 parallel circuits/client</p>
           </motion.div>
 
           {/* Packets / sec */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-5 flex flex-col gap-1" style={CARD_STYLE}>
             <CardLabel>Packets / sec</CardLabel>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px rgba(110,255,199,0.3)' }}>
+            <p className="text-4xl font-bold tabular-nums mt-1" style={{ color: 'var(--primary)', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 24px rgba(110,255,199,0.4)' }}>
               {fmt(packets)}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>+cover traffic λ=40ms</p>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>+cover traffic λ=40ms</p>
           </motion.div>
 
           {/* Hidden Services */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-5 flex flex-col gap-1" style={CARD_STYLE}>
             <CardLabel>Hidden Services</CardLabel>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: '#a855f7', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #a855f755' }}>
+            <p className="text-4xl font-bold tabular-nums mt-1" style={{ color: '#a855f7', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 24px #a855f766' }}>
               {fmt(hiddenSvcs)}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>MAX_INTRO_CIRCUITS=3</p>
-          </motion.div>
-
-          {/* Relay Cells Forwarded */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
-            <CardLabel>Cells Forwarded</CardLabel>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: '#38bdf8', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #38bdf855' }}>
-              {fmt(relayCells)}
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>relay_cells_forwarded_total</p>
-          </motion.div>
-
-          {/* Replay Window */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-2 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
-            <CardLabel>Replay Window</CardLabel>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: '#f59e0b', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #f59e0b55' }}>
-              {fmt(replayHits)}
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>WINDOW_SIZE=65,536</p>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>MAX_INTRO_CIRCUITS=3</p>
           </motion.div>
 
           {/* ── Row 2: Node Status + DHT + Traffic Chart ── */}
@@ -483,7 +466,25 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* ── Row 3: PQ Sphinx + Reputation + Privacy Level + Bandwidth ── */}
+          {/* ── Row 3: Secondary metrics + PQ Sphinx + Reputation ── */}
+
+          {/* Relay Cells Forwarded */}
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
+            <CardLabel>Cells Forwarded</CardLabel>
+            <p className="text-3xl font-bold tabular-nums mt-1" style={{ color: '#38bdf8', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #38bdf855' }}>
+              {fmt(relayCells)}
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>relay_cells_forwarded_total</p>
+          </motion.div>
+
+          {/* Replay Window */}
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-1" style={CARD_STYLE}>
+            <CardLabel>Replay Window</CardLabel>
+            <p className="text-3xl font-bold tabular-nums mt-1" style={{ color: '#f59e0b', fontFamily: 'var(--font-jetbrains-mono)', textShadow: '0 0 20px #f59e0b55' }}>
+              {fmt(replayHits)}
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-jetbrains-mono)' }}>WINDOW_SIZE=65,536</p>
+          </motion.div>
 
           {/* PQ Sphinx Metrics */}
           <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-3" style={CARD_STYLE}>
@@ -533,7 +534,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Privacy Level Distribution */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-3" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-6 rounded-xl p-4 flex flex-col gap-3" style={CARD_STYLE}>
             <CardLabel>Privacy Level Distribution</CardLabel>
             <div className="flex items-center gap-4">
               <PrivacyPie l1={820} l2={3240} l3={7890} l4={2343} />
@@ -570,7 +571,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Bandwidth Accounting */}
-          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-xl p-4 flex flex-col gap-3" style={CARD_STYLE}>
+          <motion.div variants={cardVariants} className="col-span-12 sm:col-span-6 lg:col-span-6 rounded-xl p-4 flex flex-col gap-3" style={CARD_STYLE}>
             <CardLabel>Bandwidth Accounting</CardLabel>
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
