@@ -5,17 +5,19 @@ const cols: { title: string; links: [string, string][] }[] = [
   {
     title: 'Protocol',
     links: [
-      ['/architecture', 'Architecture'],
-      ['/sphinx', 'Sphinx Routing'],
-      ['/network', 'Network'],
+      ['/architecture',    'Architecture'],
+      ['/sphinx',          'Sphinx Routing'],
+      ['/network',         'Network'],
       ['/hidden-services', 'Hidden Services'],
+      ['/cryptography',    'Cryptography'],
     ],
   },
   {
-    title: 'Tools',
+    title: 'Tools & Info',
     links: [
-      ['/dashboard', 'Dashboard'],
+      ['/dashboard',        'Dashboard'],
       ['/threat-simulator', 'Threat Simulator'],
+      ['/roadmap',          'Roadmap'],
     ],
   },
   {
